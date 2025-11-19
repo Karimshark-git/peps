@@ -30,7 +30,7 @@ class PrimaryButton extends StatelessWidget {
           disabledBackgroundColor: ColorPalette.gold.withValues(alpha: 0.5),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(20),
           ),
           shadowColor: ColorPalette.shadowMedium,
         ),

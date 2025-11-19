@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import '../theme/color_palette.dart';
 
-/// Animated progress bar for onboarding screens
+/// Animated progress bar for onboarding screens using step indices
 class OnboardingProgressBar extends StatefulWidget {
-  final double progress; // 0.0 to 1.0
+  /// Current step index (1-based: 1 = Welcome, 2 = Goals, etc.)
+  final int stepIndex;
+  
+  /// Total number of steps (default: 6)
+  final int totalSteps;
 
   const OnboardingProgressBar({
     super.key,
-    required this.progress,
-  });
+    required this.stepIndex,
+    this.totalSteps = 6,
+  }) : assert(stepIndex >= 1 && stepIndex <= totalSteps,
+           'stepIndex must be between 1 and $totalSteps');
+
+  /// Calculate progress from step index (0.0 to 1.0)
+  double get progress => (stepIndex - 1) / (totalSteps - 1);
 
   @override
   State<OnboardingProgressBar> createState() => _OnboardingProgressBarState();
@@ -24,17 +33,21 @@ class _OnboardingProgressBarState extends State<OnboardingProgressBar>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
+    
+    final targetProgress = widget.progress;
+    
     // Start from last progress value for smooth transitions
     _animation = Tween<double>(
       begin: _lastProgress,
-      end: widget.progress,
+      end: targetProgress,
     ).animate(CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeInOut,
+      curve: Curves.easeInOutCubic,
     ));
+    
     // Start animation from last value to target value when screen appears
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _controller.forward();
@@ -44,14 +57,15 @@ class _OnboardingProgressBarState extends State<OnboardingProgressBar>
   @override
   void didUpdateWidget(OnboardingProgressBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.progress != widget.progress) {
+    if (oldWidget.stepIndex != widget.stepIndex) {
       _lastProgress = _animation.value;
+      final targetProgress = widget.progress;
       _animation = Tween<double>(
         begin: _lastProgress,
-        end: widget.progress,
+        end: targetProgress,
       ).animate(CurvedAnimation(
         parent: _controller,
-        curve: Curves.easeInOut,
+        curve: Curves.easeInOutCubic,
       ));
       _controller.reset();
       _controller.forward();
@@ -66,7 +80,6 @@ class _OnboardingProgressBarState extends State<OnboardingProgressBar>
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -75,15 +88,15 @@ class _OnboardingProgressBarState extends State<OnboardingProgressBar>
         return Container(
           height: 4,
           decoration: BoxDecoration(
-            color: ColorPalette.softBeige,
+            color: ColorPalette.progressBackground,
             borderRadius: BorderRadius.circular(2),
           ),
           child: FractionallySizedBox(
             alignment: Alignment.centerLeft,
-            widthFactor: _animation.value,
+            widthFactor: _animation.value.clamp(0.0, 1.0),
             child: Container(
               decoration: BoxDecoration(
-                color: ColorPalette.gold,
+                color: ColorPalette.progressFill,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

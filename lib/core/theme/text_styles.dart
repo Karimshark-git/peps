@@ -63,5 +63,13 @@ class TextStyles {
     color: ColorPalette.textSecondary,
     height: 1.5,
   );
+  
+  // Placeholder text
+  static TextStyle placeholder = GoogleFonts.inter(
+    fontSize: 16,
+    fontWeight: FontWeight.w400,
+    color: ColorPalette.textPlaceholder,
+    height: 1.5,
+  );
 }
 

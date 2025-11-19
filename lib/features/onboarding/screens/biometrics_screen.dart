@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/onboarding_progress_bar.dart';
-import '../../../core/theme/text_styles.dart';
 import '../../../core/theme/color_palette.dart';
 import '../provider/onboarding_provider.dart';
 
-/// Biometrics screen - Third screen of onboarding
+/// Premium Body Information screen with global PEPS design system
 class BiometricsScreen extends StatefulWidget {
   const BiometricsScreen({super.key});
 
@@ -15,22 +15,21 @@ class BiometricsScreen extends StatefulWidget {
   State<BiometricsScreen> createState() => _BiometricsScreenState();
 }
 
-class _BiometricsScreenState extends State<BiometricsScreen> {
+class _BiometricsScreenState extends State<BiometricsScreen>
+    with TickerProviderStateMixin {
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
   final FocusNode _ageFocusNode = FocusNode();
   final FocusNode _heightFocusNode = FocusNode();
   final FocusNode _weightFocusNode = FocusNode();
-  
+
   String? _selectedActivityLevel;
-  
-  bool _ageFocused = false;
-  bool _heightFocused = false;
-  bool _weightFocused = false;
+  bool _isDropdownOpen = false;
+
   double _dragStartX = 0.0;
   double _dragCurrentX = 0.0;
-  
+
   final List<String> _activityLevels = [
     'Sedentary',
     'Lightly Active',
@@ -39,9 +38,17 @@ class _BiometricsScreenState extends State<BiometricsScreen> {
     'Athlete',
   ];
 
+  late AnimationController _dropdownArrowController;
+
   @override
   void initState() {
     super.initState();
+
+    _dropdownArrowController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
     // Load saved biometrics from provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<OnboardingProvider>(context, listen: false);
@@ -61,22 +68,14 @@ class _BiometricsScreenState extends State<BiometricsScreen> {
         });
       }
     });
-    
-    _ageFocusNode.addListener(() {
-      setState(() {
-        _ageFocused = _ageFocusNode.hasFocus;
-      });
-    });
-    _heightFocusNode.addListener(() {
-      setState(() {
-        _heightFocused = _heightFocusNode.hasFocus;
-      });
-    });
-    _weightFocusNode.addListener(() {
-      setState(() {
-        _weightFocused = _weightFocusNode.hasFocus;
-      });
-    });
+
+    _ageFocusNode.addListener(_onFocusChange);
+    _heightFocusNode.addListener(_onFocusChange);
+    _weightFocusNode.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    setState(() {});
   }
 
   @override
@@ -87,6 +86,7 @@ class _BiometricsScreenState extends State<BiometricsScreen> {
     _ageFocusNode.dispose();
     _heightFocusNode.dispose();
     _weightFocusNode.dispose();
+    _dropdownArrowController.dispose();
     super.dispose();
   }
 
@@ -101,7 +101,7 @@ class _BiometricsScreenState extends State<BiometricsScreen> {
     if (!_isFormValid) return;
 
     final onboardingProvider = Provider.of<OnboardingProvider>(context, listen: false);
-    
+
     final age = int.tryParse(_ageController.text);
     final height = double.tryParse(_heightController.text);
     final weight = double.tryParse(_weightController.text);
@@ -113,7 +113,7 @@ class _BiometricsScreenState extends State<BiometricsScreen> {
         weight: weight,
         activity: _selectedActivityLevel!,
       );
-      
+
       Navigator.pushNamed(context, '/lifestyle');
     }
   }
@@ -122,7 +122,7 @@ class _BiometricsScreenState extends State<BiometricsScreen> {
     final age = int.tryParse(_ageController.text);
     final height = double.tryParse(_heightController.text);
     final weight = double.tryParse(_weightController.text);
-    
+
     if (age != null && height != null && weight != null && _selectedActivityLevel != null) {
       final provider = Provider.of<OnboardingProvider>(context, listen: false);
       provider.updateBiometrics(
@@ -146,28 +146,22 @@ class _BiometricsScreenState extends State<BiometricsScreen> {
       onHorizontalDragEnd: (details) {
         final dragDistance = _dragCurrentX - _dragStartX;
         // Swipe right (from left to right) to go back
-        if (details.primaryVelocity != null && 
-            details.primaryVelocity! > 300 && 
+        if (details.primaryVelocity != null &&
+            details.primaryVelocity! > 300 &&
             dragDistance > 50) {
           _saveCurrentData();
           Navigator.pop(context);
         }
-        // Swipe left (from right to left) to go forward
-        else if (details.primaryVelocity != null && 
-                 details.primaryVelocity! < -300 && 
-                 dragDistance < -50 &&
-                 _isFormValid) {
-          _handleNext();
-        }
       },
       child: Scaffold(
+        backgroundColor: ColorPalette.background,
         body: SafeArea(
           child: Column(
             children: [
               // Progress bar
               Padding(
                 padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 0),
-                child: OnboardingProgressBar(progress: 0.5),
+                child: OnboardingProgressBar(stepIndex: 3),
               ),
               // Content
               Expanded(
@@ -177,61 +171,71 @@ class _BiometricsScreenState extends State<BiometricsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 32),
-                // Title
-                Text(
-                  'Tell us about your body',
-                  style: TextStyles.headingMedium,
-                ),
-                const SizedBox(height: 12),
-                // Subtitle
-                Text(
-                  'This helps us personalize your protocol.',
-                  style: TextStyles.subtitle,
-                ),
-                const SizedBox(height: 40),
-                // Age input
-                _buildTextField(
-                  controller: _ageController,
-                  focusNode: _ageFocusNode,
-                  label: 'Age',
-                  hint: 'Enter your age',
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                ),
-                const SizedBox(height: 20),
-                // Height input
-                _buildTextField(
-                  controller: _heightController,
-                  focusNode: _heightFocusNode,
-                  label: 'Height (cm)',
-                  hint: 'Enter your height',
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                // Weight input
-                _buildTextField(
-                  controller: _weightController,
-                  focusNode: _weightFocusNode,
-                  label: 'Weight (kg)',
-                  hint: 'Enter your weight',
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                // Activity level dropdown
-                _buildActivityDropdown(),
-                const SizedBox(height: 40),
-                // Next button
-                PrimaryButton(
-                  text: 'Next',
-                  isEnabled: _isFormValid,
-                  onPressed: _isFormValid ? _handleNext : null,
-                ),
+                      // Title - Premium serif
+                      Text(
+                        'Tell us about your body',
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          color: ColorPalette.textPrimary,
+                          height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Subtitle - Soft gray
+                      Text(
+                        'This helps us personalize your protocol.',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          color: ColorPalette.textSecondary,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      // Age input
+                      _buildAnimatedTextField(
+                        controller: _ageController,
+                        focusNode: _ageFocusNode,
+                        label: 'Age',
+                        hint: 'Enter your age',
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      ),
+                      const SizedBox(height: 20),
+                      // Height input
+                      _buildAnimatedTextField(
+                        controller: _heightController,
+                        focusNode: _heightFocusNode,
+                        label: 'Height (cm)',
+                        hint: 'Enter your height',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      // Weight input
+                      _buildAnimatedTextField(
+                        controller: _weightController,
+                        focusNode: _weightFocusNode,
+                        label: 'Weight (kg)',
+                        hint: 'Enter your weight',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      // Activity level dropdown
+                      _buildAnimatedDropdown(),
+                      const SizedBox(height: 40),
+                      // Next button
+                      PrimaryButton(
+                        text: 'Next',
+                        isEnabled: _isFormValid,
+                        onPressed: _isFormValid ? _handleNext : null,
+                      ),
                       const SizedBox(height: 32),
                     ],
                   ),
@@ -244,7 +248,7 @@ class _BiometricsScreenState extends State<BiometricsScreen> {
     );
   }
 
-  Widget _buildTextField({
+  Widget _buildAnimatedTextField({
     required TextEditingController controller,
     required FocusNode focusNode,
     required String label,
@@ -252,95 +256,103 @@ class _BiometricsScreenState extends State<BiometricsScreen> {
     required TextInputType keyboardType,
     required List<TextInputFormatter> inputFormatters,
   }) {
+    final isFocused = focusNode.hasFocus;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Label
         Text(
           label,
-          style: TextStyles.bodyMedium.copyWith(
+          style: GoogleFonts.inter(
+            fontSize: 16,
             fontWeight: FontWeight.w600,
             color: ColorPalette.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
-        Builder(
-          builder: (context) {
-            bool isFocused = false;
-            if (focusNode == _ageFocusNode) {
-              isFocused = _ageFocused;
-            } else if (focusNode == _heightFocusNode) {
-              isFocused = _heightFocused;
-            } else if (focusNode == _weightFocusNode) {
-              isFocused = _weightFocused;
-            }
-            
-            return Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFFF3EDE4),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: isFocused ? ColorPalette.gold : Colors.transparent,
-                  width: isFocused ? 2 : 0,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: ColorPalette.shadowLight,
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+        // Animated input container
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          decoration: BoxDecoration(
+            color: ColorPalette.cardBackground,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isFocused ? ColorPalette.gold : Colors.transparent,
+              width: isFocused ? 2 : 0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isFocused
+                    ? ColorPalette.gold.withValues(alpha: 0.15)
+                    : Colors.black.withValues(alpha: 0.05),
+                blurRadius: isFocused ? 12 : 8,
+                offset: const Offset(0, 2),
               ),
-              child: TextField(
-                controller: controller,
-                focusNode: focusNode,
-                keyboardType: keyboardType,
-                inputFormatters: inputFormatters,
-                style: TextStyles.bodyMedium,
-                decoration: InputDecoration(
-                  hintText: hint,
-                  hintStyle: TextStyles.bodyMedium.copyWith(
-                    color: ColorPalette.textSecondary.withValues(alpha: 0.6),
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
-                ),
-                onChanged: (_) {
-                  setState(() {});
-                  // Auto-save as user types
-                  if (_isFormValid) {
-                    _saveCurrentData();
-                  }
-                },
+            ],
+          ),
+          child: Transform.scale(
+            scale: isFocused ? 1.02 : 1.0,
+            child: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              keyboardType: keyboardType,
+              inputFormatters: inputFormatters,
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: ColorPalette.textPrimary,
               ),
-            );
-          },
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: ColorPalette.textPlaceholder,
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 18,
+                ),
+              ),
+              onChanged: (_) {
+                setState(() {});
+                // Auto-save as user types
+                if (_isFormValid) {
+                  _saveCurrentData();
+                }
+              },
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildActivityDropdown() {
+  Widget _buildAnimatedDropdown() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Label
         Text(
           'Activity Level',
-          style: TextStyles.bodyMedium.copyWith(
+          style: GoogleFonts.inter(
+            fontSize: 16,
             fontWeight: FontWeight.w600,
             color: ColorPalette.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
+        // Premium dropdown container
         Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFF3EDE4),
-            borderRadius: BorderRadius.circular(14),
+            color: ColorPalette.cardBackground,
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: ColorPalette.shadowLight,
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -348,37 +360,82 @@ class _BiometricsScreenState extends State<BiometricsScreen> {
           ),
           child: DropdownButtonFormField<String>(
             value: _selectedActivityLevel,
+            isExpanded: true,
             decoration: InputDecoration(
               border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 20,
-                vertical: 16,
+                vertical: 18,
               ),
               hintText: 'Select activity level',
-              hintStyle: TextStyles.bodyMedium.copyWith(
-                color: ColorPalette.textSecondary.withValues(alpha: 0.6),
+              hintStyle: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: ColorPalette.textPlaceholder,
               ),
             ),
-            style: TextStyles.bodyMedium,
-            dropdownColor: const Color(0xFFF3EDE4),
-            icon: Icon(
-              Icons.keyboard_arrow_down,
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
               color: ColorPalette.textPrimary,
             ),
+            dropdownColor: ColorPalette.cardBackground,
+            borderRadius: BorderRadius.circular(20),
+            icon: AnimatedBuilder(
+              animation: _dropdownArrowController,
+              builder: (context, child) {
+                return Transform.rotate(
+                  angle: _dropdownArrowController.value * 3.14159, // 180 degrees
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: ColorPalette.textPrimary,
+                    size: 24,
+                  ),
+                );
+              },
+            ),
             items: _activityLevels.map((level) {
+              final isSelected = _selectedActivityLevel == level;
               return DropdownMenuItem<String>(
                 value: level,
-                child: Text(level),
+                child: Text(
+                  level,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
+                    color: isSelected
+                        ? ColorPalette.textPrimary
+                        : ColorPalette.textSecondary,
+                  ),
+                ),
               );
             }).toList(),
-                onChanged: (value) {
+            menuMaxHeight: 280,
+            onChanged: (value) {
               setState(() {
                 _selectedActivityLevel = value;
+                _isDropdownOpen = false;
               });
+              _dropdownArrowController.reverse();
+
               // Auto-save when activity level changes
-              if (value != null && _ageController.text.isNotEmpty &&
-                  _heightController.text.isNotEmpty && _weightController.text.isNotEmpty) {
+              if (value != null &&
+                  _ageController.text.isNotEmpty &&
+                  _heightController.text.isNotEmpty &&
+                  _weightController.text.isNotEmpty) {
                 _saveCurrentData();
+              }
+            },
+            onTap: () {
+              setState(() {
+                _isDropdownOpen = !_isDropdownOpen;
+              });
+              if (_isDropdownOpen) {
+                _dropdownArrowController.forward();
+              } else {
+                _dropdownArrowController.reverse();
               }
             },
           ),

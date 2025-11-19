@@ -5,8 +5,10 @@ import 'features/onboarding/screens/biometrics_screen.dart';
 import 'features/onboarding/screens/lifestyle_screen.dart';
 import 'features/onboarding/screens/medical_screen.dart';
 import 'features/protocol/screens/protocol_screen.dart';
+import 'features/protocol/screens/protocol_building_screen.dart';
+import 'core/navigation/app_page_transitions.dart';
 
-/// App router with named routes and custom transitions
+/// App router with named routes and premium transitions
 class AppRouter {
   static const String welcome = '/';
   static const String goals = '/goals';
@@ -14,84 +16,57 @@ class AppRouter {
   static const String lifestyle = '/lifestyle';
   static const String medical = '/medical';
   static const String protocol = '/protocol';
+  static const String protocolBuilding = '/protocol-building';
   static const String nextScreenPlaceholder = '/next_screen_placeholder';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case welcome:
-        return _buildRoute(
+        return AppPageTransitions.onboardingRoute(
           const WelcomeScreen(),
           settings: settings,
         );
       case goals:
-        return _buildRoute(
+        return AppPageTransitions.onboardingRoute(
           const GoalsScreen(),
           settings: settings,
         );
       case biometrics:
-        return _buildRoute(
+        return AppPageTransitions.onboardingRoute(
           const BiometricsScreen(),
           settings: settings,
         );
       case lifestyle:
-        return _buildRoute(
+        return AppPageTransitions.onboardingRoute(
           const LifestyleScreen(),
           settings: settings,
         );
       case medical:
-        return _buildRoute(
+        return AppPageTransitions.onboardingRoute(
           const MedicalScreen(),
           settings: settings,
         );
       case protocol:
-        return _buildRoute(
+        return AppPageTransitions.onboardingRoute(
           const ProtocolScreen(),
           settings: settings,
         );
+      case protocolBuilding:
+        return AppPageTransitions.onboardingRoute(
+          const ProtocolBuildingScreen(),
+          settings: settings,
+        );
       case nextScreenPlaceholder:
-        return _buildRoute(
+        return AppPageTransitions.onboardingRoute(
           _NextScreenPlaceholder(),
           settings: settings,
         );
       default:
-        return _buildRoute(
+        return AppPageTransitions.onboardingRoute(
           const WelcomeScreen(),
           settings: settings,
         );
     }
-  }
-
-  /// Build route with fade + slide transition
-  static PageRouteBuilder<dynamic> _buildRoute(
-    Widget page, {
-    required RouteSettings settings,
-  }) {
-    return PageRouteBuilder<dynamic>(
-      settings: settings,
-      pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        const begin = Offset(1.0, 0.0);
-        const end = Offset.zero;
-        const curve = Curves.easeInOut;
-
-        var slideAnimation = Tween(begin: begin, end: end).animate(
-          CurvedAnimation(parent: animation, curve: curve),
-        );
-
-        var fadeAnimation = Tween(begin: 0.0, end: 1.0).animate(
-          CurvedAnimation(parent: animation, curve: curve),
-        );
-
-        return SlideTransition(
-          position: slideAnimation,
-          child: FadeTransition(
-            opacity: fadeAnimation,
-            child: child,
-          ),
-        );
-      },
-      transitionDuration: const Duration(milliseconds: 300),
-    );
   }
 }
 
