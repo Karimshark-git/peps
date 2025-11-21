@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:math' as math;
 import '../../../core/theme/color_palette.dart';
+import '../../../engine/recommendation_engine.dart';
+import '../../../engine/models/peptide_recommendation.dart';
+import '../../../providers/protocol_provider.dart';
+import '../../onboarding/provider/onboarding_provider.dart';
 
 /// Premium protocol building loading screen with animated DNA helix
 class ProtocolBuildingScreen extends StatefulWidget {
@@ -51,12 +56,66 @@ class _ProtocolBuildingScreenState extends State<ProtocolBuildingScreen>
       }
     });
 
-    // Navigate after 5 seconds
-    Future.delayed(const Duration(seconds: 5), () {
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/protocol');
+    // Run engine and navigate
+    _generateProtocol();
+  }
+
+  Future<void> _generateProtocol() async {
+    // Get onboarding data
+    final onboardingProvider =
+        Provider.of<OnboardingProvider>(context, listen: false);
+    final model = onboardingProvider.model;
+
+    // Extract lifestyle factors
+    final lifestyleFactors = <String>[];
+    if (model.lifestyle.isNotEmpty) {
+      final factors = model.lifestyle['factors'] as List<dynamic>?;
+      if (factors != null) {
+        lifestyleFactors.addAll(factors.cast<String>());
       }
-    });
+    }
+
+    // Extract medical conditions
+    final medicalConditions = <String>[];
+    if (model.medical.isNotEmpty) {
+      final conditions = model.medical['conditions'] as List<dynamic>?;
+      if (conditions != null) {
+        medicalConditions.addAll(conditions.cast<String>());
+      }
+    }
+
+    // Build onboarding response
+    final response = OnboardingResponse(
+      goals: model.goals,
+      age: model.age,
+      height: model.height,
+      weight: model.weight,
+      activityLevel: model.activityLevel,
+      lifestyleFactors: lifestyleFactors,
+      medicalConditions: medicalConditions,
+    );
+
+    // Run engine (with minimum 5 second delay)
+    final engineStartTime = DateTime.now();
+    final recommendations =
+        await RecommendationEngine.generateProtocol(response);
+    final engineDuration = DateTime.now().difference(engineStartTime);
+
+    // Save to provider
+    final protocolProvider =
+        Provider.of<ProtocolProvider>(context, listen: false);
+    protocolProvider.saveProtocol(recommendations);
+
+    // Ensure minimum 5 seconds total
+    final remainingTime = const Duration(seconds: 5) - engineDuration;
+    if (remainingTime.inMilliseconds > 0) {
+      await Future.delayed(remainingTime);
+    }
+
+    // Navigate to protocol ready screen
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, '/protocol');
+    }
   }
 
   @override

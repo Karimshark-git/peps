@@ -6,6 +6,10 @@ import 'features/onboarding/screens/lifestyle_screen.dart';
 import 'features/onboarding/screens/medical_screen.dart';
 import 'features/protocol/screens/protocol_screen.dart';
 import 'features/protocol/screens/protocol_building_screen.dart';
+import 'features/auth/screens/login_screen.dart';
+import 'features/auth/screens/create_account_email_screen.dart';
+import 'features/auth/screens/email_verification_pending_screen.dart';
+import 'features/navigation/main_navigation.dart';
 import 'core/navigation/app_page_transitions.dart';
 
 /// App router with named routes and premium transitions
@@ -17,6 +21,10 @@ class AppRouter {
   static const String medical = '/medical';
   static const String protocol = '/protocol';
   static const String protocolBuilding = '/protocol-building';
+  static const String login = '/login';
+  static const String createAccountEmail = '/create-account-email';
+  static const String emailVerificationPending = '/email-verification-pending';
+  static const String home = '/home';
   static const String nextScreenPlaceholder = '/next_screen_placeholder';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -54,6 +62,26 @@ class AppRouter {
       case protocolBuilding:
         return AppPageTransitions.onboardingRoute(
           const ProtocolBuildingScreen(),
+          settings: settings,
+        );
+      case login:
+        return AppPageTransitions.onboardingRoute(
+          const LoginScreen(),
+          settings: settings,
+        );
+      case createAccountEmail:
+        return AppPageTransitions.onboardingRoute(
+          const CreateAccountEmailScreen(),
+          settings: settings,
+        );
+      case emailVerificationPending:
+        return AppPageTransitions.onboardingRoute(
+          const EmailVerificationPendingScreen(),
+          settings: settings,
+        );
+      case home:
+        return AppPageTransitions.onboardingRoute(
+          const MainNavigation(),
           settings: settings,
         );
       case nextScreenPlaceholder:

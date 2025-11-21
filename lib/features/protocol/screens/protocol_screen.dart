@@ -4,11 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/widgets/onboarding_progress_bar.dart';
 import '../../../core/theme/color_palette.dart';
 import '../../../core/navigation/app_page_transitions.dart';
-import '../../onboarding/provider/onboarding_provider.dart';
-import '../../onboarding/models/onboarding_model.dart';
-import '../engine/protocol_engine.dart';
-import '../data/peptides.dart';
-import 'peptide_details_screen.dart';
+import '../../auth/widgets/create_account_modal.dart';
+import '../../../providers/protocol_provider.dart';
+import '../../../engine/models/peptide_recommendation.dart';
+import 'peptide_details_screen_new.dart';
 
 /// Premium Protocol screen with 3D carousel and wellness-style design
 class ProtocolScreen extends StatefulWidget {
@@ -22,7 +21,7 @@ class _ProtocolScreenState extends State<ProtocolScreen>
     with TickerProviderStateMixin {
   late PageController _pageController;
   int _currentPage = 0;
-  List<Peptide> _recommendedPeptides = [];
+  List<PeptideRecommendation> _recommendedPeptides = [];
   late AnimationController _headerAnimationController;
   late AnimationController _cardAnimationController;
   late Animation<double> _headerFadeAnimation;
@@ -89,11 +88,10 @@ class _ProtocolScreenState extends State<ProtocolScreen>
 
   @override
   Widget build(BuildContext context) {
-    final onboardingProvider = Provider.of<OnboardingProvider>(context);
-    final model = onboardingProvider.model;
-
-    // Generate protocol
-    _recommendedPeptides = ProtocolEngine.generate(model);
+    final protocolProvider = Provider.of<ProtocolProvider>(context);
+    
+    // Get protocol from provider
+    _recommendedPeptides = protocolProvider.protocol;
 
     return Scaffold(
       backgroundColor: ColorPalette.background,
@@ -224,21 +222,19 @@ class _ProtocolScreenState extends State<ProtocolScreen>
                                               ),
                                               child: PeptideProtocolCard(
                                                 peptide: _recommendedPeptides[index],
-                                                model: model,
                                                 isActive: isActive,
                                                 shadowOpacity: shadowOpacity,
-                                              onTap: () {
-                                                Navigator.push(
-                                                  context,
-                                                  AppPageTransitions.cardPushRoute(
-                                                    PeptideDetailsScreen(
-                                                      peptide:
-                                                          _recommendedPeptides[index],
-                                                      model: model,
+                                                onTap: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    AppPageTransitions.cardPushRoute(
+                                                      PeptideDetailsScreenNew(
+                                                        recommendation:
+                                                            _recommendedPeptides[index],
+                                                      ),
                                                     ),
-                                                  ),
-                                                );
-                                              },
+                                                  );
+                                                },
                                               ),
                                             ),
                                           ),
@@ -266,18 +262,14 @@ class _ProtocolScreenState extends State<ProtocolScreen>
                   padding: const EdgeInsets.fromLTRB(24.0, 0, 24.0, 24.0),
                   child: _PremiumConsultationButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Consultation booking coming soon!',
-                            style: GoogleFonts.inter(
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                          backgroundColor: ColorPalette.gold,
-                          duration: const Duration(seconds: 2),
-                        ),
+                      // Show beautiful create account modal
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        isDismissible: true,
+                        enableDrag: true,
+                        builder: (context) => const CreateAccountModal(),
                       );
                     },
                   ),
@@ -393,8 +385,7 @@ class _PremiumConsultationButton extends StatelessWidget {
 
 /// Premium 3D peptide protocol card
 class PeptideProtocolCard extends StatelessWidget {
-  final Peptide peptide;
-  final OnboardingModel model;
+  final PeptideRecommendation peptide;
   final bool isActive;
   final double shadowOpacity;
   final VoidCallback onTap;
@@ -402,30 +393,10 @@ class PeptideProtocolCard extends StatelessWidget {
   const PeptideProtocolCard({
     super.key,
     required this.peptide,
-    required this.model,
     required this.isActive,
     required this.shadowOpacity,
     required this.onTap,
   });
-
-  String _getDeliveryMethod() {
-    if (peptide.frequency.contains('subcutaneously')) {
-      return 'Subcutaneous';
-    } else if (peptide.frequency.contains('topically')) {
-      return 'Topical';
-    } else if (peptide.frequency.contains('intranasally')) {
-      return 'Intranasal';
-    } else if (peptide.frequency.contains('orally')) {
-      return 'Oral';
-    }
-    return 'Subcutaneous';
-  }
-
-  String _getProtocolInfo() {
-    final weeks = '12'; // Placeholder - can be extracted from peptide data
-    final route = _getDeliveryMethod();
-    return '$weeks weeks • $route';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -433,150 +404,182 @@ class PeptideProtocolCard extends StatelessWidget {
     
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(
-            minHeight: 0,
-            maxHeight: double.infinity,
-          ),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.white,
-                const Color(0xFFF8F3EC),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(
-                  alpha: 0.05 + (shadowOpacity * 0.05),
-                ),
-                blurRadius: 8 + (shadowOpacity * 4),
-                offset: Offset(0, 2 + (shadowOpacity * 2)),
-              ),
+      child: Container(
+        width: double.infinity,
+        constraints: const BoxConstraints(
+          minHeight: 0,
+        ),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.white,
+              const Color(0xFFF8F3EC),
             ],
           ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(
+                alpha: 0.05 + (shadowOpacity * 0.05),
+              ),
+              blurRadius: 8 + (shadowOpacity * 4),
+              offset: Offset(0, 2 + (shadowOpacity * 2)),
+            ),
+          ],
+        ),
+        child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               // Title: Peptide name in bold serif
               Text(
-                peptide.name,
-                style: GoogleFonts.playfairDisplay(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1A1A1A),
-                  height: 1.2,
-                ),
+                  peptide.name,
+                  style: GoogleFonts.playfairDisplay(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1A1A1A),
+                    height: 1.2,
+                  ),
               ),
               const SizedBox(height: 10),
               // Subtitle: Category pill-style label (optional)
               if (peptide.category.isNotEmpty)
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: ColorPalette.cardBackground,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    peptide.category,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: ColorPalette.textSecondary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: ColorPalette.cardBackground,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      peptide.category,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: ColorPalette.textSecondary,
+                      ),
                     ),
                   ),
+                if (peptide.category.isNotEmpty) const SizedBox(height: 14),
+                // Summary: 2-3 lines, auto-truncated
+                Text(
+                  peptide.summary,
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    color: ColorPalette.textPrimary,
+                    height: 1.5,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              if (peptide.category.isNotEmpty) const SizedBox(height: 14),
-              // Description: 2-3 lines, auto-truncated
-              Text(
-                peptide.description,
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w400,
-                  color: ColorPalette.textPrimary,
-                  height: 1.5,
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 16),
-              // Benefits: bullet list with golden bullets
-              ...peptide.benefits
-                  .split(',')
-                  .take(2)
-                  .map((benefit) {
-                final trimmed = benefit.trim();
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '• ',
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          color: goldColor,
-                          fontWeight: FontWeight.bold,
-                        ),
+                // Benefits: bullet list with golden bullets (top 2 short benefits)
+                if (peptide.shortBenefits.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  ...peptide.shortBenefits
+                      .take(2)
+                      .map((benefit) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '• ',
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              color: goldColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              benefit,
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: ColorPalette.textPrimary,
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      Expanded(
-                        child: Text(
-                          trimmed,
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: ColorPalette.textPrimary,
-                            height: 1.5,
+                    );
+                  }).toList(),
+                ],
+                // Reasoning text
+                if (peptide.reasoning.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: ColorPalette.background,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline,
+                          size: 16,
+                          color: goldColor,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            peptide.reasoning,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                              color: ColorPalette.textSecondary,
+                              height: 1.4,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-              const SizedBox(height: 16),
-              // Footer: Estimated protocol length • Delivery method
-              Text(
-                _getProtocolInfo(),
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: ColorPalette.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Right-aligned CTA: View Details →
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    'View Details',
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: goldColor,
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 14,
-                    color: goldColor,
-                  ),
                 ],
-              ),
+                const SizedBox(height: 8),
+                // Right-aligned CTA: View Details →
+                InkWell(
+                  onTap: onTap,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'View Details',
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: goldColor,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 14,
+                          color: goldColor,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -584,3 +587,4 @@ class PeptideProtocolCard extends StatelessWidget {
     );
   }
 }
+

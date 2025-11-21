@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:math' as math;
+import '../../../app_router.dart';
 
 /// Premium Welcome screen with luxury Dubai wellness aesthetic
 class WelcomeScreen extends StatefulWidget {
@@ -153,6 +154,33 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           },
                         ),
                       ],
+                    ),
+                  ),
+                ),
+              ),
+              // Login link at bottom
+              Positioned(
+                bottom: 32,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, AppRouter.login);
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                    ),
+                    child: Text(
+                      'Already have an account? Sign in',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF6F6F6F).withValues(alpha: 0.5),
+                      ),
                     ),
                   ),
                 ),
