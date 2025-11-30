@@ -177,7 +177,7 @@ class _MedicalScreenState extends State<MedicalScreen>
                   // Progress bar
                   Padding(
                     padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 0),
-                    child: OnboardingProgressBar(stepIndex: 5),
+                    child: OnboardingProgressBar(stepIndex: 5, totalSteps: 6),
                   ),
                   // Content
                   Expanded(
@@ -187,15 +187,22 @@ class _MedicalScreenState extends State<MedicalScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 32),
-                          // Title - Premium serif
-                          Text(
-                            'Medical Information',
-                            style: GoogleFonts.playfairDisplay(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w700,
-                              color: ColorPalette.textPrimary,
-                              height: 1.2,
-                            ),
+                          // Title - Premium serif - personalized
+                          Builder(
+                            builder: (context) {
+                              final provider = Provider.of<OnboardingProvider>(context);
+                              final firstName = provider.model.firstName ?? '';
+                              final greeting = firstName.isNotEmpty ? '$firstName, ' : '';
+                              return Text(
+                                '$greeting${greeting.isNotEmpty ? 'l' : 'L'}ast step: Medical Information',
+                                style: GoogleFonts.playfairDisplay(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w700,
+                                  color: ColorPalette.textPrimary,
+                                  height: 1.2,
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 12),
                           // Subtitle - Soft gray

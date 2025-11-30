@@ -29,14 +29,28 @@ class AuthService {
         throw Exception('User email not found');
       }
 
-      // 2. Upsert into users table
+      // 2. Upsert into users table (with first_name if available)
+      final onboardingProvider = Provider.of<OnboardingProvider>(
+        context,
+        listen: false,
+      );
+      final firstName = onboardingProvider.model.firstName;
+      
+      final userData = <String, dynamic>{
+        'auth_uid': uid,
+        'email': email,
+      };
+      
+      // Add first_name if available
+      if (firstName != null && firstName.isNotEmpty) {
+        userData['first_name'] = firstName;
+      }
+      
+      // Upsert user - this will create the entry if it doesn't exist
       final userResponse = await supabase
           .from('users')
           .upsert(
-            {
-              'auth_uid': uid,
-              'email': email,
-            },
+            userData,
             onConflict: 'auth_uid',
           )
           .select()
@@ -45,10 +59,6 @@ class AuthService {
       final userId = userResponse['id'] as String;
 
       // 3. Save onboarding data if available
-      final onboardingProvider = Provider.of<OnboardingProvider>(
-        context,
-        listen: false,
-      );
       await OnboardingService.saveOnboardingResponseForUserWithModel(
         userId,
         onboardingProvider.model,
@@ -104,9 +114,9 @@ class AuthService {
           (route) => false, // Remove all previous routes
         );
       } else {
-        // User hasn't completed onboarding - start assessment
+        // User hasn't completed onboarding - start with name screen
         Navigator.of(context).pushNamedAndRemoveUntil(
-          AppRouter.goals,
+          AppRouter.name,
           (route) => false, // Remove all previous routes
         );
       }

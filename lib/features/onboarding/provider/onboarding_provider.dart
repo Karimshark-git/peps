@@ -7,6 +7,12 @@ class OnboardingProvider extends ChangeNotifier {
 
   OnboardingModel get model => _model;
 
+  /// Update first name
+  void updateFirstName(String firstName) {
+    _model = _model.copyWith(firstName: firstName);
+    notifyListeners();
+  }
+
   /// Update goals list
   void updateGoals(List<String> goals) {
     _model = _model.copyWith(goals: goals);

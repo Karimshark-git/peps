@@ -183,7 +183,7 @@ class _LifestyleScreenState extends State<LifestyleScreen>
               // Progress bar
               Padding(
                 padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 0),
-                child: OnboardingProgressBar(stepIndex: 4),
+                child: OnboardingProgressBar(stepIndex: 4, totalSteps: 6),
               ),
               // Content
               Expanded(
@@ -193,15 +193,22 @@ class _LifestyleScreenState extends State<LifestyleScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 40),
-                      // Title
-                      Text(
-                        'Tell us about your lifestyle',
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1A1A1A), // Deep charcoal
-                          height: 1.2,
-                        ),
+                      // Title - personalized
+                      Builder(
+                        builder: (context) {
+                          final provider = Provider.of<OnboardingProvider>(context);
+                          final firstName = provider.model.firstName ?? '';
+                          final greeting = firstName.isNotEmpty ? '$firstName, ' : '';
+                          return Text(
+                            '$greeting${greeting.isNotEmpty ? 't' : 'T'}ell us about your lifestyle',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1A1A1A), // Deep charcoal
+                              height: 1.2,
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 12),
                       // Subtitle

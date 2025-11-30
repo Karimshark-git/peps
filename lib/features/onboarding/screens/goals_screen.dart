@@ -166,7 +166,7 @@ class _GoalsScreenState extends State<GoalsScreen>
             // Progress bar
             Padding(
               padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 0),
-              child: OnboardingProgressBar(stepIndex: 2),
+              child: OnboardingProgressBar(stepIndex: 2, totalSteps: 6),
             ),
             // Content
             Expanded(
@@ -176,15 +176,22 @@ class _GoalsScreenState extends State<GoalsScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 32),
-                    // Title
-                    Text(
-                      'What are your goals?',
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w700,
-                        color: ColorPalette.textPrimary,
-                        height: 1.2,
-                      ),
+                    // Title - personalized
+                    Builder(
+                      builder: (context) {
+                        final provider = Provider.of<OnboardingProvider>(context);
+                        final firstName = provider.model.firstName ?? '';
+                        final greeting = firstName.isNotEmpty ? '$firstName, ' : '';
+                        return Text(
+                          '$greeting${greeting.isNotEmpty ? 'w' : 'W'}hat are your goals?',
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                            color: ColorPalette.textPrimary,
+                            height: 1.2,
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 12),
                     // Subtitle

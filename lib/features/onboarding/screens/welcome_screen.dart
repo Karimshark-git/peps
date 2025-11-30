@@ -150,7 +150,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         _PremiumButton(
                           text: 'Begin My Assessment',
                           onPressed: () {
-                            Navigator.pushNamed(context, '/goals');
+                            Navigator.pushNamed(context, AppRouter.name);
                           },
                         ),
                       ],

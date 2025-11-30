@@ -10,10 +10,11 @@ class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
 
   @override
-  State<MainNavigation> createState() => _MainNavigationState();
+  State<MainNavigation> createState() => MainNavigationState();
 }
 
-class _MainNavigationState extends State<MainNavigation> {
+/// State class for MainNavigation (public for global key access)
+class MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = const [
@@ -21,6 +22,15 @@ class _MainNavigationState extends State<MainNavigation> {
     MyProtocolScreen(),
     ProfileScreen(),
   ];
+
+  /// Method to programmatically change the current tab
+  void setCurrentIndex(int index) {
+    if (index >= 0 && index < _screens.length) {
+      setState(() {
+        _currentIndex = index;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

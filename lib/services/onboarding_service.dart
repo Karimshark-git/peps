@@ -32,13 +32,13 @@ class OnboardingService {
 
       // Extract lifestyle factors from model
       final lifestyleFactors = <String>[];
-      if (model.lifestyle.isNotEmpty) {
-        lifestyleFactors.addAll(
-          model.lifestyle.values
-              .whereType<String>()
-              .where((v) => v.isNotEmpty)
-              .toList(),
-        );
+      if (model.lifestyle.containsKey('factors')) {
+        final factors = model.lifestyle['factors'];
+        if (factors is List) {
+          lifestyleFactors.addAll(
+            factors.whereType<String>().toList(),
+          );
+        }
       }
 
       // Extract medical conditions from model
@@ -55,6 +55,7 @@ class OnboardingService {
       // Prepare data for insertion
       final onboardingData = {
         'user_id': userId,
+        'first_name': model.firstName,
         'goals': model.goals.isNotEmpty ? model.goals : null,
         'age': model.age,
         'height_cm': model.height?.toInt(),
@@ -80,7 +81,8 @@ class OnboardingService {
 
   /// Helper method to check if onboarding data exists
   static bool _hasOnboardingData(OnboardingModel model) {
-    return model.goals.isNotEmpty ||
+    return model.firstName != null ||
+        model.goals.isNotEmpty ||
         model.age != null ||
         model.height != null ||
         model.weight != null ||

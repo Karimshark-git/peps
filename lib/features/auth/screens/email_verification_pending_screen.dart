@@ -82,13 +82,19 @@ class _EmailVerificationPendingScreenState
       final password = credentialsProvider.password!;
 
       // Attempt to sign in (will succeed if email is verified)
-      await supabase.auth.signInWithPassword(
+      final response = await supabase.auth.signInWithPassword(
         email: email,
         password: password,
       );
 
-      // Check if user is authenticated
-      if (supabase.auth.currentUser != null) {
+      // Check if user is authenticated and email is verified
+      final user = response.user;
+      if (user != null) {
+        // Check if email is actually verified
+        if (user.emailConfirmedAt == null) {
+          throw Exception('Email not yet verified. Please check your email and click the verification link.');
+        }
+
         // Clear credentials
         credentialsProvider.clearCredentials();
 
@@ -97,7 +103,7 @@ class _EmailVerificationPendingScreenState
           await AuthService.handlePostLogin(context);
         }
       } else {
-        throw Exception('Email not yet verified');
+        throw Exception('Email not yet verified. Please check your email and click the verification link.');
       }
     } catch (e) {
       setState(() {

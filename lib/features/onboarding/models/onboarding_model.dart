@@ -1,5 +1,6 @@
 /// Model for onboarding data
 class OnboardingModel {
+  String? firstName;
   List<String> goals;
   int? age;
   double? height;
@@ -9,6 +10,7 @@ class OnboardingModel {
   Map<String, dynamic> medical;
 
   OnboardingModel({
+    this.firstName,
     this.goals = const [],
     this.age,
     this.height,
@@ -21,6 +23,7 @@ class OnboardingModel {
 
   /// Create a copy with updated fields
   OnboardingModel copyWith({
+    String? firstName,
     List<String>? goals,
     int? age,
     double? height,
@@ -30,6 +33,7 @@ class OnboardingModel {
     Map<String, dynamic>? medical,
   }) {
     return OnboardingModel(
+      firstName: firstName ?? this.firstName,
       goals: goals ?? this.goals,
       age: age ?? this.age,
       height: height ?? this.height,
@@ -42,6 +46,7 @@ class OnboardingModel {
 
   /// Reset all fields to initial state
   void reset() {
+    firstName = null;
     goals = [];
     age = null;
     height = null;

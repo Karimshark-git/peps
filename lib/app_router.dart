@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'features/onboarding/screens/welcome_screen.dart';
+import 'features/onboarding/screens/name_screen.dart';
 import 'features/onboarding/screens/goals_screen.dart';
 import 'features/onboarding/screens/biometrics_screen.dart';
 import 'features/onboarding/screens/lifestyle_screen.dart';
@@ -15,6 +16,7 @@ import 'core/navigation/app_page_transitions.dart';
 /// App router with named routes and premium transitions
 class AppRouter {
   static const String welcome = '/';
+  static const String name = '/name';
   static const String goals = '/goals';
   static const String biometrics = '/biometrics';
   static const String lifestyle = '/lifestyle';
@@ -32,6 +34,11 @@ class AppRouter {
       case welcome:
         return AppPageTransitions.onboardingRoute(
           const WelcomeScreen(),
+          settings: settings,
+        );
+      case name:
+        return AppPageTransitions.onboardingRoute(
+          const NameScreen(),
           settings: settings,
         );
       case goals:
