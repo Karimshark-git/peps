@@ -210,19 +210,51 @@ main          ← production-ready, stable
    git worktree add .claude/worktrees/[feature-name] -b [feature-name] development
    ```
 2. **Do all work** inside that worktree — never commit directly to `development` or `main`
-3. **When complete** — open a PR from `[feature-name]` → `main` (skip development as the merge target)
-4. **After merge** — delete the worktree and branch
+3. **When complete** — open a PR from `[feature-name]` → `development` (NOT main)
+4. **After merge to development** — verify the change, then promote to production by merging `development` → `main` (separate step, done once confirmed)
+5. **Cleanup** — delete the worktree and branch
 
 ### Worktree Naming
 
-Name worktrees and branches after the feature or task, e.g.:
+Worktrees and branches should generally be named after the feature or task, e.g.:
 - `check-in-redesign`
 - `protocol-pdf-export`
 - `auth-google-deeplink-fix`
 
+An auto-generated worktree name (e.g., `claude/festive-ride`) is acceptable — what matters is that work is isolated in its own worktree and merges back to `development`.
+
 ### Rules
 
 - Always work in a worktree — never on `main` or `development` directly
-- PRs always target `main`
+- **PRs always target `development`** — never `main`
+- `main` only receives changes via `development` → `main` merges after confirmation
 - Worktree branch always starts from `development`
-- Worktree name = feature name (descriptive, kebab-case)
+- Worktree name is descriptive kebab-case when possible; auto-generated names are fine
+
+---
+
+## Skills
+
+### flutter-expert
+This project is a Flutter iOS app. The flutter-expert skill should be automatically applied to all tasks involving:
+- UI implementation and screen redesigns
+- Animation and custom painters
+- State management and provider patterns
+- Supabase data loading and async patterns
+- Performance optimization
+- Navigation and routing
+- Platform-specific iOS configurations
+
+Always prioritize:
+- 60fps animation performance
+- RepaintBoundary on expensive custom paint widgets
+- const constructors wherever possible
+- Proper dispose() of all AnimationControllers
+- mounted checks before setState after async calls
+- Smooth loading states before data arrives
+
+## Project Context
+- Flutter + Provider + Supabase
+- iOS primary target
+- Dark glass design system (Color(0xFF08101E) background, Color(0xFF3ECFA0) teal accent, Sora + DM Mono fonts)
+- All screens use PepsAmbientOrbs, PepsGlassCard, PepsSectionLabel shared widgets
