@@ -57,9 +57,9 @@ lib/
 │   ├── ai_protocol_engine.dart      # Anthropic Claude API integration
 │   └── models/peptide_recommendation.dart
 ├── providers/
-│   ├── onboarding_provider.dart     # Multi-step form state
 │   ├── protocol_provider.dart       # Recommendation cache pre-auth
 │   └── auth_credentials_provider.dart  # Temp email/pass during verification
+│   (note: OnboardingProvider lives at features/onboarding/provider/onboarding_provider.dart)
 └── services/
     ├── supabase_client.dart         # Global Supabase instance
     ├── auth_service.dart            # handlePostLogin — upsert user, save onboarding, route
@@ -78,13 +78,22 @@ assets/branding/peps-logo.png
 
 ## Database Schema (Supabase/PostgreSQL)
 
+> **Auth identity:** `users.id` IS the auth id — it's both the primary key AND a foreign key to `auth.users.id`. There is **no separate `auth_uid` column** (the dual-column model was consolidated). Every other table references `users.id` via `user_id`.
+
+> **Source of truth:** the live Supabase schema is authoritative. Files in `database/` (e.g. `schema.sql`) may lag behind — verify against the live DB (or via the Supabase MCP) before relying on them.
+
 | Table | Key Columns |
 |---|---|
-| `users` | `id`, `auth_uid`, `email`, `first_name`, `created_at` |
-| `onboarding_responses` | `user_id`, `first_name`, `goals`, `age`, `height_cm`, `weight_kg`, `activity_level`, `lifestyle_factors[]`, `medical_conditions[]` |
-| `peptides` | `id`, `name`, `category`, `description`, `benefits`, `dosage`, `goals_supported`, `medical_flags`, `contraindications` |
-| `recommendations` | `user_id`, `peptide_id`, `reasoning`, `created_at` |
-| `check_ins` | `user_id`, `energy`, `sleep`, `recovery`, `mood`, `overall`, `side_effects_notes` |
+| `users` | `id` (PK, FK → `auth.users.id`), `email`, `first_name`, `plan`, `plan_status`, `plan_started_at`, `created_at` |
+| `onboarding_responses` | `id`, `user_id` (unique FK), `first_name`, `goals[]`, `age`, `height_cm`, `weight_kg`, `activity_level`, `lifestyle_factors[]`, `medical_conditions[]`, `created_at` |
+| `peptides` | `id`, `name`, `category`, `summary`, `description`, `benefits[]`, `short_benefits[]`, `dosage`, `frequency`, `cycle_length`, `administration_route`, `goals_supported[]`, `lifestyle_supported[]`, `biometric_modifiers` (jsonb), `medical_flags[]`, `contraindications[]`, `risk_level`, `requires_prescription`, `is_active`, `reasoning_template` |
+| `recommendations` | `id`, `user_id`, `peptide_id`, `reasoning`, `score`, `physician_status`, `physician_notes`, `reviewed_at`, `created_at` |
+| `check_ins` | `id`, `user_id`, `week_number`, `energy_score` (1–10), `sleep_score` (1–10), `recovery_score` (1–10), `mood_score` (1–10), `side_effects`, `notes`, `ai_summary`, `flagged_for_physician`, `created_at` |
+| `protocol_cycles` | `id`, `user_id`, `plan`, `status`, `started_at`, `ends_at`, `next_delivery_at`, `delivery_address`, `created_at` |
+| `lab_uploads` | `id`, `user_id`, `file_path`, `file_name`, `physician_reviewed`, `ai_summary`, `notes`, `uploaded_at` |
+| `physician_messages` | `id`, `user_id`, `sender` (`user` \| `physician`), `message`, `read`, `created_at` |
+
+All `public.*` tables have RLS enabled.
 
 ---
 
