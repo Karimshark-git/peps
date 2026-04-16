@@ -661,7 +661,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     return Column(
       children: [
         SizedBox(
-          height: 250,
+          height: 285,
           child: PageView.builder(
             controller: _ringPageController,
             itemCount: _peptideCycles.length,
