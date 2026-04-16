@@ -1,22 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
 import '../../../core/widgets/primary_button.dart';
-import '../../../core/widgets/onboarding_progress_bar.dart';
-import '../../../core/theme/color_palette.dart';
 import '../provider/onboarding_provider.dart';
 
-/// Premium Body Information screen with global PEPS design system
-class BiometricsScreen extends StatefulWidget {
-  const BiometricsScreen({super.key});
+/// Biometrics — step 3/6. Chrome lives in [OnboardingPersonalizationShell].
+class BiometricsPersonalizationPage extends StatefulWidget {
+  final VoidCallback onContinueToNextStep;
+  final VoidCallback onFlowBackStep;
+
+  const BiometricsPersonalizationPage({
+    super.key,
+    required this.onContinueToNextStep,
+    required this.onFlowBackStep,
+  });
 
   @override
-  State<BiometricsScreen> createState() => _BiometricsScreenState();
+  State<BiometricsPersonalizationPage> createState() =>
+      BiometricsPersonalizationPageState();
 }
 
-class _BiometricsScreenState extends State<BiometricsScreen>
-    with TickerProviderStateMixin {
+class BiometricsPersonalizationPageState
+    extends State<BiometricsPersonalizationPage>
+    with AutomaticKeepAliveClientMixin {
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
@@ -25,7 +33,6 @@ class _BiometricsScreenState extends State<BiometricsScreen>
   final FocusNode _weightFocusNode = FocusNode();
 
   String? _selectedActivityLevel;
-  bool _isDropdownOpen = false;
 
   double _dragStartX = 0.0;
   double _dragCurrentX = 0.0;
@@ -38,18 +45,13 @@ class _BiometricsScreenState extends State<BiometricsScreen>
     'Athlete',
   ];
 
-  late AnimationController _dropdownArrowController;
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
 
-    _dropdownArrowController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-
-    // Load saved biometrics from provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<OnboardingProvider>(context, listen: false);
       final model = provider.model;
@@ -57,10 +59,10 @@ class _BiometricsScreenState extends State<BiometricsScreen>
         _ageController.text = model.age.toString();
       }
       if (model.height != null) {
-        _heightController.text = model.height.toString();
+        _heightController.text = model.height!.toInt().toString();
       }
       if (model.weight != null) {
-        _weightController.text = model.weight.toString();
+        _weightController.text = model.weight!.toInt().toString();
       }
       if (model.activityLevel != null) {
         setState(() {
@@ -86,7 +88,6 @@ class _BiometricsScreenState extends State<BiometricsScreen>
     _ageFocusNode.dispose();
     _heightFocusNode.dispose();
     _weightFocusNode.dispose();
-    _dropdownArrowController.dispose();
     super.dispose();
   }
 
@@ -99,14 +100,19 @@ class _BiometricsScreenState extends State<BiometricsScreen>
 
   void _handleNext() {
     if (!_isFormValid) return;
+    FocusScope.of(context).unfocus();
 
-    final onboardingProvider = Provider.of<OnboardingProvider>(context, listen: false);
+    final onboardingProvider =
+        Provider.of<OnboardingProvider>(context, listen: false);
 
     final age = int.tryParse(_ageController.text);
     final height = double.tryParse(_heightController.text);
     final weight = double.tryParse(_weightController.text);
 
-    if (age != null && height != null && weight != null && _selectedActivityLevel != null) {
+    if (age != null &&
+        height != null &&
+        weight != null &&
+        _selectedActivityLevel != null) {
       onboardingProvider.updateBiometrics(
         age: age,
         height: height,
@@ -114,7 +120,7 @@ class _BiometricsScreenState extends State<BiometricsScreen>
         activity: _selectedActivityLevel!,
       );
 
-      Navigator.pushNamed(context, '/lifestyle');
+      widget.onContinueToNextStep();
     }
   }
 
@@ -123,7 +129,10 @@ class _BiometricsScreenState extends State<BiometricsScreen>
     final height = double.tryParse(_heightController.text);
     final weight = double.tryParse(_weightController.text);
 
-    if (age != null && height != null && weight != null && _selectedActivityLevel != null) {
+    if (age != null &&
+        height != null &&
+        weight != null &&
+        _selectedActivityLevel != null) {
       final provider = Provider.of<OnboardingProvider>(context, listen: false);
       provider.updateBiometrics(
         age: age,
@@ -134,8 +143,23 @@ class _BiometricsScreenState extends State<BiometricsScreen>
     }
   }
 
+  void persistToProvider() => _saveCurrentData();
+
+  Widget _eyebrowLabel(String text) {
+    return Text(
+      text,
+      style: GoogleFonts.sora(
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+        color: const Color(0xFF3ECFA0),
+        letterSpacing: 1.0,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return GestureDetector(
       onHorizontalDragStart: (details) {
         _dragStartX = details.globalPosition.dx;
@@ -145,117 +169,155 @@ class _BiometricsScreenState extends State<BiometricsScreen>
       },
       onHorizontalDragEnd: (details) {
         final dragDistance = _dragCurrentX - _dragStartX;
-        // Swipe right (from left to right) to go back
         if (details.primaryVelocity != null &&
             details.primaryVelocity! > 300 &&
             dragDistance > 50) {
           _saveCurrentData();
-          Navigator.pop(context);
+          widget.onFlowBackStep();
         }
       },
-      child: Scaffold(
-        backgroundColor: ColorPalette.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Progress bar
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 0),
-                child: OnboardingProgressBar(stepIndex: 3, totalSteps: 6),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(0, 8, 0, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _eyebrowLabel('BODY METRICS'),
+            const SizedBox(height: 4),
+            Text(
+              'Tell us about yourself',
+              maxLines: 2,
+              style: GoogleFonts.sora(
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xE6FFFFFF),
+                height: 1.15,
+                letterSpacing: -0.3,
               ),
-              // Content
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 32),
-                      // Title - Premium serif - personalized
-                      Builder(
-                        builder: (context) {
-                          final provider = Provider.of<OnboardingProvider>(context);
-                          final firstName = provider.model.firstName ?? '';
-                          final greeting = firstName.isNotEmpty ? '$firstName, ' : '';
-                          return Text(
-                            '$greeting${greeting.isNotEmpty ? 't' : 'T'}ell us about your body',
-                            style: GoogleFonts.playfairDisplay(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w700,
-                              color: ColorPalette.textPrimary,
-                              height: 1.2,
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildField(
+                      controller: _ageController,
+                      focusNode: _ageFocusNode,
+                      label: 'AGE',
+                      hint: 'Enter your age',
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildField(
+                      controller: _heightController,
+                      focusNode: _heightFocusNode,
+                      label: 'HEIGHT (CM)',
+                      hint: 'Enter your height',
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildField(
+                      controller: _weightController,
+                      focusNode: _weightFocusNode,
+                      label: 'WEIGHT (KG)',
+                      hint: 'Enter your weight',
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _eyebrowLabel('ACTIVITY LEVEL'),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: _activityLevels.map((level) {
+                        final selected = _selectedActivityLevel == level;
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedActivityLevel = level;
+                            });
+                            if (_ageController.text.isNotEmpty &&
+                                _heightController.text.isNotEmpty &&
+                                _weightController.text.isNotEmpty) {
+                              _saveCurrentData();
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
                             ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      // Subtitle - Soft gray
-                      Text(
-                        'This helps us personalize your protocol.',
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          color: ColorPalette.textSecondary,
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-                      // Age input
-                      _buildAnimatedTextField(
-                        controller: _ageController,
-                        focusNode: _ageFocusNode,
-                        label: 'Age',
-                        hint: 'Enter your age',
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      ),
-                      const SizedBox(height: 20),
-                      // Height input
-                      _buildAnimatedTextField(
-                        controller: _heightController,
-                        focusNode: _heightFocusNode,
-                        label: 'Height (cm)',
-                        hint: 'Enter your height',
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      // Weight input
-                      _buildAnimatedTextField(
-                        controller: _weightController,
-                        focusNode: _weightFocusNode,
-                        label: 'Weight (kg)',
-                        hint: 'Enter your weight',
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      // Activity level dropdown
-                      _buildAnimatedDropdown(),
-                      const SizedBox(height: 40),
-                      // Next button
-                      PrimaryButton(
-                        text: 'Next',
-                        isEnabled: _isFormValid,
-                        onPressed: _isFormValid ? _handleNext : null,
-                      ),
-                      const SizedBox(height: 32),
-                    ],
-                  ),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? const Color(0x1A3ECFA0)
+                                  : const Color(0x0FFFFFFF),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: selected
+                                    ? const Color(0x663ECFA0)
+                                    : const Color(0x1AFFFFFF),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              level,
+                              style: GoogleFonts.sora(
+                                fontSize: 12,
+                                fontWeight: selected
+                                    ? FontWeight.w500
+                                    : FontWeight.w400,
+                                color: selected
+                                    ? const Color(0xFF3ECFA0)
+                                    : const Color(0x8CFFFFFF),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x4D3ECFA0),
+                    blurRadius: 20,
+                    spreadRadius: -4,
+                    offset: Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: PrimaryButton(
+                text: 'Next →',
+                textColor: const Color(0xFF04201A),
+                isEnabled: _isFormValid,
+                onPressed: _isFormValid ? _handleNext : null,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildAnimatedTextField({
+  Widget _buildField({
     required TextEditingController controller,
     required FocusNode focusNode,
     required String label,
@@ -268,187 +330,89 @@ class _BiometricsScreenState extends State<BiometricsScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label
         Text(
           label,
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: ColorPalette.textPrimary,
+          style: GoogleFonts.sora(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF3ECFA0),
+            letterSpacing: 1.0,
           ),
         ),
-        const SizedBox(height: 8),
-        // Animated input container
+        const SizedBox(height: 4),
         AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
+          duration: const Duration(milliseconds: 200),
           curve: Curves.easeOutCubic,
           decoration: BoxDecoration(
-            color: ColorPalette.cardBackground,
-            borderRadius: BorderRadius.circular(20),
+            color: const Color(0x14FFFFFF),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isFocused ? ColorPalette.gold : Colors.transparent,
-              width: isFocused ? 2 : 0,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isFocused
-                    ? ColorPalette.gold.withValues(alpha: 0.15)
-                    : Colors.black.withValues(alpha: 0.05),
-                blurRadius: isFocused ? 12 : 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Transform.scale(
-            scale: isFocused ? 1.02 : 1.0,
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              keyboardType: keyboardType,
-              inputFormatters: inputFormatters,
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                color: ColorPalette.textPrimary,
-              ),
-              decoration: InputDecoration(
-                hintText: hint,
-                hintStyle: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: ColorPalette.textPlaceholder,
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 18,
-                ),
-              ),
-              onChanged: (_) {
-                setState(() {});
-                // Auto-save as user types
-                if (_isFormValid) {
-                  _saveCurrentData();
-                }
-              },
+              color: isFocused
+                  ? const Color(0xFF3ECFA0)
+                  : const Color(0x1AFFFFFF),
+              width: isFocused ? 1.5 : 1,
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAnimatedDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Label
-        Text(
-          'Activity Level',
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: ColorPalette.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        // Premium dropdown container
-        Container(
-          decoration: BoxDecoration(
-            color: ColorPalette.cardBackground,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: DropdownButtonFormField<String>(
-            value: _selectedActivityLevel,
-            isExpanded: true,
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 18,
-              ),
-              hintText: 'Select activity level',
-              hintStyle: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                color: ColorPalette.textPlaceholder,
-              ),
-            ),
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              color: ColorPalette.textPrimary,
-            ),
-            dropdownColor: ColorPalette.cardBackground,
-            borderRadius: BorderRadius.circular(20),
-            icon: AnimatedBuilder(
-              animation: _dropdownArrowController,
-              builder: (context, child) {
-                return Transform.rotate(
-                  angle: _dropdownArrowController.value * 3.14159, // 180 degrees
-                  child: Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: ColorPalette.textPrimary,
-                    size: 24,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Stack(
+              children: [
+                TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  keyboardType: keyboardType,
+                  inputFormatters: inputFormatters,
+                  cursorColor: const Color(0xFF3ECFA0),
+                  style: GoogleFonts.sora(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xE6FFFFFF),
                   ),
-                );
-              },
-            ),
-            items: _activityLevels.map((level) {
-              final isSelected = _selectedActivityLevel == level;
-              return DropdownMenuItem<String>(
-                value: level,
-                child: Text(
-                  level,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-                    color: isSelected
-                        ? ColorPalette.textPrimary
-                        : ColorPalette.textSecondary,
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: GoogleFonts.sora(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0x4DFFFFFF),
+                    ),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                  ),
+                  onChanged: (_) {
+                    setState(() {});
+                    if (_isFormValid) {
+                      _saveCurrentData();
+                    }
+                  },
+                ),
+                const Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 1,
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Color(0x29FFFFFF),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              );
-            }).toList(),
-            menuMaxHeight: 280,
-            onChanged: (value) {
-              setState(() {
-                _selectedActivityLevel = value;
-                _isDropdownOpen = false;
-              });
-              _dropdownArrowController.reverse();
-
-              // Auto-save when activity level changes
-              if (value != null &&
-                  _ageController.text.isNotEmpty &&
-                  _heightController.text.isNotEmpty &&
-                  _weightController.text.isNotEmpty) {
-                _saveCurrentData();
-              }
-            },
-            onTap: () {
-              setState(() {
-                _isDropdownOpen = !_isDropdownOpen;
-              });
-              if (_isDropdownOpen) {
-                _dropdownArrowController.forward();
-              } else {
-                _dropdownArrowController.reverse();
-              }
-            },
+              ],
+            ),
           ),
         ),
       ],
     );
   }
 }
-

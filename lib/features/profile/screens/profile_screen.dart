@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/color_palette.dart';
+import '../../../core/widgets/peps_section_label.dart';
 import '../../../services/supabase_client.dart';
 import '../../../services/protocol_service.dart';
 import '../../../app_router.dart';
@@ -186,7 +187,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           const SizedBox(height: 16),
           Text(
             'Loading your profile...',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.sora(
               fontSize: 16,
               color: ColorPalette.textSecondary,
             ),
@@ -203,7 +204,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.error_outline,
               size: 64,
               color: ColorPalette.textSecondary,
@@ -211,7 +212,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             const SizedBox(height: 16),
             Text(
               "We couldn't load your profile right now.",
-              style: GoogleFonts.inter(
+              style: GoogleFonts.sora(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: ColorPalette.textPrimary,
@@ -220,19 +221,20 @@ class _ProfileScreenState extends State<ProfileScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'Please try again.',
-              style: GoogleFonts.inter(
+              'If you removed your account, sign out to start fresh. You can also retry if this was a temporary issue.',
+              style: GoogleFonts.sora(
                 fontSize: 14,
                 color: ColorPalette.textSecondary,
+                height: 1.45,
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _loadProfileData,
+              onPressed: _isLoggingOut ? null : _loadProfileData,
               style: ElevatedButton.styleFrom(
                 backgroundColor: ColorPalette.gold,
-                foregroundColor: Colors.white,
+                foregroundColor: ColorPalette.buttonOnAccent,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 12,
@@ -240,11 +242,34 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
               child: Text(
                 'Retry',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.sora(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                 ),
               ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: _isLoggingOut ? null : _handleLogout,
+              child: _isLoggingOut
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          ColorPalette.gold,
+                        ),
+                      ),
+                    )
+                  : Text(
+                      'Sign out',
+                      style: GoogleFonts.sora(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: ColorPalette.gold,
+                      ),
+                    ),
             ),
           ],
         ),
@@ -264,7 +289,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           // Title
           Text(
             'Your Profile',
-            style: GoogleFonts.playfairDisplay(
+            style: GoogleFonts.sora(
               fontSize: 32,
               fontWeight: FontWeight.w700,
               color: ColorPalette.textPrimary,
@@ -283,7 +308,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           if (hasOnboardingData)
             _BiometricsCard(onboardingData: _onboardingData!)
           else
-            _EmptySectionCard(
+            const _EmptySectionCard(
               title: 'Biometrics',
               message:
                   'No data available yet. Your protocol will appear here after you complete onboarding.',
@@ -293,7 +318,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           if (hasOnboardingData)
             _GoalsCard(onboardingData: _onboardingData!)
           else
-            _EmptySectionCard(
+            const _EmptySectionCard(
               title: 'Goals',
               message:
                   'No data available yet. Your protocol will appear here after you complete onboarding.',
@@ -303,7 +328,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           if (hasOnboardingData)
             _LifestyleCard(onboardingData: _onboardingData!)
           else
-            _EmptySectionCard(
+            const _EmptySectionCard(
               title: 'Lifestyle Factors',
               message:
                   'No data available yet. Your protocol will appear here after you complete onboarding.',
@@ -313,7 +338,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           if (hasOnboardingData)
             _MedicalConditionsCard(onboardingData: _onboardingData!)
           else
-            _EmptySectionCard(
+            const _EmptySectionCard(
               title: 'Medical Considerations',
               message:
                   'No data available yet. Your protocol will appear here after you complete onboarding.',
@@ -348,20 +373,14 @@ class _HeaderCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white,
-            const Color(0xFFF8F3EC),
-          ],
-        ),
+        color: ColorPalette.cardBackground,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: ColorPalette.cardBorder),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            color: ColorPalette.shadowLight,
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -372,19 +391,19 @@ class _HeaderCard extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: ColorPalette.gold.withValues(alpha: 0.2),
+              color: ColorPalette.accentDim,
               shape: BoxShape.circle,
               border: Border.all(
-                color: ColorPalette.gold,
-                width: 2,
+                color: ColorPalette.accentBorder,
+                width: 1,
               ),
             ),
             child: Center(
               child: Text(
                 initials,
-                style: GoogleFonts.playfairDisplay(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
+                style: GoogleFonts.sora(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                   color: ColorPalette.gold,
                 ),
               ),
@@ -398,7 +417,7 @@ class _HeaderCard extends StatelessWidget {
               children: [
                 Text(
                   'Your Peps ID',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.sora(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: ColorPalette.textSecondary,
@@ -407,7 +426,7 @@ class _HeaderCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   email,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.sora(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: ColorPalette.textPrimary,
@@ -416,7 +435,7 @@ class _HeaderCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Member since $memberSince',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.sora(
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
                     color: ColorPalette.textSecondary,
@@ -450,7 +469,7 @@ class _BiometricsCard extends StatelessWidget {
         (activityLevel != null && activityLevel.isNotEmpty);
 
     if (!hasAnyData) {
-      return _EmptySectionCard(
+      return const _EmptySectionCard(
         title: 'Biometrics',
         message: 'No biometric data recorded yet.',
       );
@@ -511,7 +530,7 @@ class _BiometricChip extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.sora(
               fontSize: 11,
               fontWeight: FontWeight.w500,
               color: ColorPalette.textSecondary,
@@ -520,7 +539,7 @@ class _BiometricChip extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             value,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.sora(
               fontSize: 15,
               fontWeight: FontWeight.w600,
               color: ColorPalette.textPrimary,
@@ -545,7 +564,7 @@ class _GoalsCard extends StatelessWidget {
     );
 
     if (goals.isEmpty) {
-      return _EmptySectionCard(
+      return const _EmptySectionCard(
         title: 'Goals',
         message: 'No goals recorded yet.',
       );
@@ -572,7 +591,7 @@ class _GoalsCard extends StatelessWidget {
             ),
             child: Text(
               goal,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.sora(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: ColorPalette.gold,
@@ -598,7 +617,7 @@ class _LifestyleCard extends StatelessWidget {
     );
 
     if (lifestyleFactors.isEmpty) {
-      return _EmptySectionCard(
+      return const _EmptySectionCard(
         title: 'Lifestyle Factors',
         message: 'No lifestyle factors recorded.',
       );
@@ -621,7 +640,7 @@ class _LifestyleCard extends StatelessWidget {
             ),
             child: Text(
               factor,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.sora(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: ColorPalette.textSecondary,
@@ -657,7 +676,7 @@ class _MedicalConditionsCard extends StatelessWidget {
           if (hasNone)
             Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.check_circle_outline,
                   size: 16,
                   color: ColorPalette.gold,
@@ -665,7 +684,7 @@ class _MedicalConditionsCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   'No medical conditions reported.',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.sora(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     color: ColorPalette.textSecondary,
@@ -694,7 +713,7 @@ class _MedicalConditionsCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.info_outline,
                         size: 14,
                         color: ColorPalette.textSecondary,
@@ -702,7 +721,7 @@ class _MedicalConditionsCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       Text(
                         condition,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.sora(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: ColorPalette.textSecondary,
@@ -723,7 +742,7 @@ class _MedicalConditionsCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
+                const Icon(
                   Icons.info_outline,
                   size: 16,
                   color: ColorPalette.textSecondary,
@@ -732,7 +751,7 @@ class _MedicalConditionsCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Final decisions are always made by your clinician based on full medical review.',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.sora(
                       fontSize: 11,
                       fontWeight: FontWeight.w400,
                       color: ColorPalette.textSecondary,
@@ -767,14 +786,14 @@ class _AccountActionsCard extends StatelessWidget {
         children: [
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
+            height: 52,
+            child: OutlinedButton(
               onPressed: isLoggingOut ? null : onLogout,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ColorPalette.gold,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ColorPalette.gold,
+                side: const BorderSide(color: ColorPalette.gold, width: 1),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
               child: isLoggingOut
@@ -783,14 +802,16 @@ class _AccountActionsCard extends StatelessWidget {
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(ColorPalette.gold),
                       ),
                     )
                   : Text(
-                      'Log Out',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
+                      'Sign out',
+                      style: GoogleFonts.sora(
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
+                        color: ColorPalette.gold,
                       ),
                     ),
             ),
@@ -816,27 +837,21 @@ class _SectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: ColorPalette.cardBackground,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: ColorPalette.cardBorder),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            color: ColorPalette.shadowLight,
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: ColorPalette.textPrimary,
-            ),
-          ),
+          PepsSectionLabel(text: title),
           const SizedBox(height: 16),
           child,
         ],
@@ -861,7 +876,7 @@ class _EmptySectionCard extends StatelessWidget {
       title: title,
       child: Text(
         message,
-        style: GoogleFonts.inter(
+        style: GoogleFonts.sora(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: ColorPalette.textSecondary,

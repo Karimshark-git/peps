@@ -203,9 +203,9 @@ class _GoalCardState extends State<GoalCard>
                         AnimatedOpacity(
                           opacity: _selectionAnimation.value,
                           duration: const Duration(milliseconds: 150),
-                          child: Icon(
+                          child: const Icon(
                             Icons.check_circle_rounded,
-                            color: const Color(0xFFC7A572),
+                            color: Color(0xFFC7A572),
                             size: 24,
                           ),
                         ),

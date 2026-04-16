@@ -8,6 +8,16 @@ class PeptideRecommendation {
   final String category;
   final List<String> shortBenefits;
 
+  final String patientSummary;
+  final String confidence;
+  final int rank;
+  final String primaryGoalMatch;
+  final List<String> contraindictionFlags;
+  final String dosage;
+  final String frequency;
+  final String cycleLength;
+  final String stackNote;
+
   PeptideRecommendation({
     required this.peptideId,
     required this.name,
@@ -16,7 +26,55 @@ class PeptideRecommendation {
     required this.score,
     required this.category,
     required this.shortBenefits,
+    this.patientSummary = '',
+    this.confidence = '',
+    this.rank = 0,
+    this.primaryGoalMatch = '',
+    this.contraindictionFlags = const [],
+    this.dosage = '',
+    this.frequency = '',
+    this.cycleLength = '',
+    this.stackNote = '',
   });
+
+  PeptideRecommendation copyWith({
+    String? peptideId,
+    String? name,
+    String? summary,
+    String? reasoning,
+    double? score,
+    String? category,
+    List<String>? shortBenefits,
+    String? patientSummary,
+    String? confidence,
+    int? rank,
+    String? primaryGoalMatch,
+    List<String>? contraindictionFlags,
+    String? dosage,
+    String? frequency,
+    String? cycleLength,
+    String? stackNote,
+  }) {
+    return PeptideRecommendation(
+      peptideId: peptideId ?? this.peptideId,
+      name: name ?? this.name,
+      summary: summary ?? this.summary,
+      reasoning: reasoning ?? this.reasoning,
+      score: score ?? this.score,
+      category: category ?? this.category,
+      shortBenefits: shortBenefits ?? this.shortBenefits,
+      patientSummary: patientSummary ?? this.patientSummary,
+      confidence: confidence ?? this.confidence,
+      rank: rank ?? this.rank,
+      primaryGoalMatch: primaryGoalMatch ?? this.primaryGoalMatch,
+      contraindictionFlags:
+          contraindictionFlags ?? this.contraindictionFlags,
+      dosage: dosage ?? this.dosage,
+      frequency: frequency ?? this.frequency,
+      cycleLength: cycleLength ?? this.cycleLength,
+      stackNote: stackNote ?? this.stackNote,
+    );
+  }
 }
 
 /// Model for onboarding response data used by the engine
@@ -39,4 +97,3 @@ class OnboardingResponse {
     required this.medicalConditions,
   });
 }
-

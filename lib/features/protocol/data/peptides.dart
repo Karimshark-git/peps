@@ -25,7 +25,7 @@ class Peptide {
 
 /// Database of available peptides
 final List<Peptide> peptideDatabase = [
-  Peptide(
+  const Peptide(
     name: 'BPC-157',
     description: 'A synthetic peptide derived from body protection compound, known for its remarkable healing properties.',
     category: 'Recovery & Healing',
@@ -36,7 +36,7 @@ final List<Peptide> peptideDatabase = [
     benefits: 'Accelerates tissue repair, reduces inflammation, improves gut health, and enhances muscle recovery.',
     mechanism: 'Promotes angiogenesis and stimulates growth factors, accelerating wound healing and tissue regeneration.',
   ),
-  Peptide(
+  const Peptide(
     name: 'TB-500',
     description: 'A synthetic version of thymosin beta-4, a naturally occurring peptide that promotes healing and recovery.',
     category: 'Recovery & Healing',
@@ -47,7 +47,7 @@ final List<Peptide> peptideDatabase = [
     benefits: 'Enhances muscle growth, improves flexibility, accelerates injury recovery, and supports cardiovascular health.',
     mechanism: 'Increases cell migration and proliferation, promotes new blood vessel formation, and reduces inflammation.',
   ),
-  Peptide(
+  const Peptide(
     name: 'CJC-1295 + Ipamorelin',
     description: 'A powerful growth hormone releasing peptide combination that stimulates natural GH production.',
     category: 'Anti-Aging',
@@ -58,7 +58,7 @@ final List<Peptide> peptideDatabase = [
     benefits: 'Increases lean muscle mass, reduces body fat, improves sleep quality, and enhances recovery.',
     mechanism: 'Stimulates pituitary gland to release growth hormone, promoting tissue repair and metabolic optimization.',
   ),
-  Peptide(
+  const Peptide(
     name: 'AOD-9604',
     description: 'A fragment of human growth hormone specifically designed for fat loss without affecting blood sugar.',
     category: 'Weight Loss',
@@ -69,7 +69,7 @@ final List<Peptide> peptideDatabase = [
     benefits: 'Targets stubborn fat deposits, increases metabolism, preserves muscle mass during weight loss.',
     mechanism: 'Mimics the fat-burning effects of growth hormone without the side effects, specifically targeting adipose tissue.',
   ),
-  Peptide(
+  const Peptide(
     name: 'Epitalon',
     description: 'A synthetic tetrapeptide that may support telomere health and cellular longevity.',
     category: 'Anti-Aging',
@@ -80,7 +80,7 @@ final List<Peptide> peptideDatabase = [
     benefits: 'May support telomere length, improve sleep quality, enhance immune function, and promote longevity.',
     mechanism: 'Stimulates production of telomerase, potentially slowing cellular aging and supporting DNA repair.',
   ),
-  Peptide(
+  const Peptide(
     name: 'GHK-Cu',
     description: 'A copper-binding peptide that plays a crucial role in tissue repair and anti-aging processes.',
     category: 'Anti-Aging',
@@ -91,7 +91,7 @@ final List<Peptide> peptideDatabase = [
     benefits: 'Improves skin elasticity, reduces wrinkles, promotes wound healing, and supports collagen production.',
     mechanism: 'Stimulates collagen and elastin synthesis, activates stem cells, and promotes tissue regeneration.',
   ),
-  Peptide(
+  const Peptide(
     name: 'MOTS-C',
     description: 'A mitochondrial-derived peptide that enhances metabolic function and energy production.',
     category: 'Energy & Vitality',
@@ -102,7 +102,7 @@ final List<Peptide> peptideDatabase = [
     benefits: 'Improves insulin sensitivity, enhances fat burning, increases energy levels, and supports metabolic health.',
     mechanism: 'Regulates metabolic pathways in mitochondria, improving glucose utilization and fat oxidation.',
   ),
-  Peptide(
+  const Peptide(
     name: 'Semax',
     description: 'A synthetic peptide derived from ACTH that enhances cognitive function and neuroprotection.',
     category: 'Cognitive Performance',
@@ -113,7 +113,7 @@ final List<Peptide> peptideDatabase = [
     benefits: 'Enhances memory, improves focus, increases mental clarity, and provides neuroprotective effects.',
     mechanism: 'Increases BDNF levels, enhances neurotransmitter activity, and promotes neuroplasticity.',
   ),
-  Peptide(
+  const Peptide(
     name: 'Selank',
     description: 'A synthetic peptide that modulates anxiety and enhances cognitive performance.',
     category: 'Cognitive Performance',
@@ -124,7 +124,7 @@ final List<Peptide> peptideDatabase = [
     benefits: 'Reduces anxiety, improves mood, enhances memory formation, and supports stress resilience.',
     mechanism: 'Modulates GABA and serotonin systems, reducing anxiety while enhancing cognitive function.',
   ),
-  Peptide(
+  const Peptide(
     name: 'PT-141 (Bremelanotide)',
     description: 'A synthetic peptide that enhances libido and sexual function in both men and women.',
     category: 'Libido & Performance',
@@ -135,7 +135,7 @@ final List<Peptide> peptideDatabase = [
     benefits: 'Increases libido, improves sexual function, enhances arousal, and supports intimate wellness.',
     mechanism: 'Activates melanocortin receptors in the brain, specifically targeting sexual arousal pathways.',
   ),
-  Peptide(
+  const Peptide(
     name: 'Thymosin Alpha-1',
     description: 'A naturally occurring peptide that plays a crucial role in immune system function.',
     category: 'Anti-Aging',
@@ -146,7 +146,7 @@ final List<Peptide> peptideDatabase = [
     benefits: 'Enhances immune function, supports viral defense, improves vaccine response, and promotes longevity.',
     mechanism: 'Stimulates T-cell production and maturation, enhancing overall immune system competence.',
   ),
-  Peptide(
+  const Peptide(
     name: 'KPV',
     description: 'A tripeptide fragment of alpha-MSH with anti-inflammatory and gut-healing properties.',
     category: 'Recovery & Healing',
@@ -157,7 +157,7 @@ final List<Peptide> peptideDatabase = [
     benefits: 'Reduces inflammation, supports gut health, improves skin conditions, and enhances recovery.',
     mechanism: 'Modulates inflammatory pathways, supports intestinal barrier function, and reduces oxidative stress.',
   ),
-  Peptide(
+  const Peptide(
     name: 'DSIP (Delta Sleep Inducing Peptide)',
     description: 'A neuropeptide that promotes deep, restorative sleep.',
     category: 'Energy & Vitality',
@@ -168,7 +168,7 @@ final List<Peptide> peptideDatabase = [
     benefits: 'Improves sleep quality, enhances deep sleep phases, supports recovery, and regulates circadian rhythm.',
     mechanism: 'Modulates sleep-wake cycles, promotes delta wave sleep, and supports natural sleep architecture.',
   ),
-  Peptide(
+  const Peptide(
     name: 'LL-37',
     description: 'A naturally occurring antimicrobial peptide with immune and skin health benefits.',
     category: 'Skin & Beauty',
@@ -179,7 +179,7 @@ final List<Peptide> peptideDatabase = [
     benefits: 'Improves skin barrier function, reduces acne, supports wound healing, and enhances skin immunity.',
     mechanism: 'Exerts antimicrobial activity, modulates immune responses, and promotes skin cell regeneration.',
   ),
-  Peptide(
+  const Peptide(
     name: 'GHRP-6',
     description: 'A growth hormone releasing peptide that stimulates appetite and GH secretion.',
     category: 'Muscle Growth',

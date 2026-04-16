@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/color_palette.dart';
+import '../../../core/theme/text_styles.dart';
+import '../../../core/widgets/peps_glass_card.dart';
+import '../../../core/widgets/peps_section_label.dart';
 import '../../../engine/models/peptide_recommendation.dart';
 import '../../../services/supabase_client.dart';
 
@@ -85,8 +88,6 @@ class _PeptideDetailsScreenNewState extends State<PeptideDetailsScreenNew>
 
   @override
   Widget build(BuildContext context) {
-    const goldColor = Color(0xFFD1A057);
-
     return Scaffold(
       backgroundColor: ColorPalette.background,
       body: SafeArea(
@@ -103,7 +104,7 @@ class _PeptideDetailsScreenNewState extends State<PeptideDetailsScreenNew>
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      goldColor.withValues(alpha: 0.08),
+                      ColorPalette.gold.withValues(alpha: 0.08),
                       Colors.transparent,
                     ],
                   ),
@@ -139,14 +140,14 @@ class _PeptideDetailsScreenNewState extends State<PeptideDetailsScreenNew>
                           ? const Center(
                               child: CircularProgressIndicator(
                                 valueColor:
-                                    AlwaysStoppedAnimation<Color>(goldColor),
+                                    AlwaysStoppedAnimation<Color>(ColorPalette.gold),
                               ),
                             )
                           : _error != null
                               ? Center(
                                   child: Text(
                                     _error!,
-                                    style: GoogleFonts.inter(
+                                    style: GoogleFonts.sora(
                                       fontSize: 16,
                                       color: Colors.red,
                                     ),
@@ -165,21 +166,7 @@ class _PeptideDetailsScreenNewState extends State<PeptideDetailsScreenNew>
                                         category: widget.recommendation.category,
                                         summary: widget.recommendation.summary,
                                       ),
-                                      const SizedBox(height: 32),
-
-                                      // Reasoning Card
-                                      if (widget.recommendation.reasoning
-                                          .isNotEmpty)
-                                        _InfoCard(
-                                          icon: Icons.lightbulb_outline,
-                                          title: 'Why This Peptide',
-                                          content: widget.recommendation.reasoning,
-                                          color: goldColor,
-                                        ),
-
-                                      if (widget.recommendation.reasoning
-                                          .isNotEmpty)
-                                        const SizedBox(height: 20),
+                                      const SizedBox(height: 28),
 
                                       // Description Card
                                       if (_peptideData?['description'] != null)
@@ -188,7 +175,7 @@ class _PeptideDetailsScreenNewState extends State<PeptideDetailsScreenNew>
                                           title: 'Description',
                                           content:
                                               _peptideData!['description'] as String,
-                                          color: goldColor,
+                                          color: ColorPalette.gold,
                                         ),
 
                                       if (_peptideData?['description'] != null)
@@ -208,6 +195,31 @@ class _PeptideDetailsScreenNewState extends State<PeptideDetailsScreenNew>
                                       if (_peptideData?['benefits'] != null)
                                         const SizedBox(height: 20),
 
+                                      // Dosage & Frequency
+                                      if (_peptideData?['dosage'] != null ||
+                                          _peptideData?['frequency'] != null)
+                                        _DosageCard(
+                                          dosage: _peptideData?['dosage'] as String?,
+                                          frequency:
+                                              _peptideData?['frequency'] as String?,
+                                        ),
+
+                                      if (_peptideData?['dosage'] != null ||
+                                          _peptideData?['frequency'] != null)
+                                        const SizedBox(height: 20),
+
+                                      // Reasoning
+                                      if (widget
+                                          .recommendation.reasoning.isNotEmpty)
+                                        _ReasoningGlassCard(
+                                          content:
+                                              widget.recommendation.reasoning,
+                                        ),
+
+                                      if (widget
+                                          .recommendation.reasoning.isNotEmpty)
+                                        const SizedBox(height: 20),
+
                                       // Goals Supported
                                       if (_peptideData?['goals_supported'] != null)
                                         _TagsCard(
@@ -217,7 +229,7 @@ class _PeptideDetailsScreenNewState extends State<PeptideDetailsScreenNew>
                                             _peptideData!['goals_supported']
                                                 as List<dynamic>,
                                           ),
-                                          color: goldColor,
+                                          color: ColorPalette.gold,
                                         ),
 
                                       if (_peptideData?['goals_supported'] != null)
@@ -233,7 +245,7 @@ class _PeptideDetailsScreenNewState extends State<PeptideDetailsScreenNew>
                                             _peptideData!['lifestyle_supported']
                                                 as List<dynamic>,
                                           ),
-                                          color: goldColor,
+                                          color: ColorPalette.gold,
                                         ),
 
                                       if (_peptideData?['lifestyle_supported'] !=
@@ -286,16 +298,7 @@ class _PeptideDetailsScreenNewState extends State<PeptideDetailsScreenNew>
                                               .isNotEmpty)
                                         const SizedBox(height: 20),
 
-                                      // Dosage & Frequency
-                                      if (_peptideData?['dosage'] != null ||
-                                          _peptideData?['frequency'] != null)
-                                        _DosageCard(
-                                          dosage: _peptideData?['dosage'] as String?,
-                                          frequency:
-                                              _peptideData?['frequency'] as String?,
-                                        ),
-
-                                      const SizedBox(height: 20),
+                                      const SizedBox(height: 4),
                                     ],
                                   ),
                                 ),
@@ -325,56 +328,45 @@ class _HeaderSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const goldColor = Color(0xFFD1A057);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Title
         Text(
           name,
-          style: GoogleFonts.playfairDisplay(
-            fontSize: 36,
-            fontWeight: FontWeight.w700,
+          style: GoogleFonts.sora(
+            fontSize: 26,
+            fontWeight: FontWeight.w500,
             color: ColorPalette.textPrimary,
-            height: 1.2,
+            height: 1.25,
+            letterSpacing: -0.3,
           ),
         ),
-        const SizedBox(height: 16),
-        // Category badge
+        const SizedBox(height: 12),
         if (category.isNotEmpty)
           Container(
             padding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 8,
+              horizontal: 10,
+              vertical: 5,
             ),
             decoration: BoxDecoration(
-              color: goldColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: goldColor.withValues(alpha: 0.3),
-                width: 1,
-              ),
+              color: ColorPalette.accentDim,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: ColorPalette.accentBorder),
             ),
             child: Text(
-              category,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: goldColor,
+              category.toUpperCase(),
+              style: GoogleFonts.dmMono(
+                fontSize: 10,
+                fontWeight: FontWeight.w400,
+                color: ColorPalette.textTeal,
+                letterSpacing: 0.6,
               ),
             ),
           ),
-        if (category.isNotEmpty) const SizedBox(height: 20),
-        // Summary
+        if (category.isNotEmpty) const SizedBox(height: 16),
         Text(
           summary,
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            color: ColorPalette.textSecondary,
-            height: 1.6,
-          ),
+          style: TextStyles.bodyMedium.copyWith(height: 1.55),
         ),
       ],
     );
@@ -397,19 +389,9 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return PepsGlassCard(
+      borderRadius: 20,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: ColorPalette.cardBackground,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -419,9 +401,9 @@ class _InfoCard extends StatelessWidget {
               const SizedBox(width: 10),
               Text(
                 title,
-                style: GoogleFonts.playfairDisplay(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
+                style: GoogleFonts.sora(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
                   color: ColorPalette.textPrimary,
                 ),
               ),
@@ -430,12 +412,7 @@ class _InfoCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             content,
-            style: GoogleFonts.inter(
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
-              color: ColorPalette.textSecondary,
-              height: 1.6,
-            ),
+            style: TextStyles.bodyMedium.copyWith(height: 1.55),
           ),
         ],
       ),
@@ -455,61 +432,38 @@ class _BenefitsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const goldColor = Color(0xFFD1A057);
     final displayBenefits = shortBenefits.isNotEmpty
         ? shortBenefits
         : benefits.take(5).toList();
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: ColorPalette.cardBackground,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.star_outline, color: goldColor, size: 20),
-              const SizedBox(width: 10),
-              Text(
-                'Benefits',
-                style: GoogleFonts.playfairDisplay(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: ColorPalette.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ...displayBenefits.map((benefit) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const PepsSectionLabel(text: 'BENEFITS'),
+        const SizedBox(height: 12),
+        for (final benefit in displayBenefits)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: PepsGlassCard(
+              borderRadius: 14,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '• ',
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      color: goldColor,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    width: 6,
+                    height: 6,
+                    margin: const EdgeInsets.only(top: 5, right: 10),
+                    decoration: const BoxDecoration(
+                      color: ColorPalette.gold,
+                      shape: BoxShape.circle,
                     ),
                   ),
                   Expanded(
                     child: Text(
                       benefit,
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
+                      style: GoogleFonts.sora(
+                        fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: ColorPalette.textPrimary,
                         height: 1.5,
@@ -518,10 +472,9 @@ class _BenefitsCard extends StatelessWidget {
                   ),
                 ],
               ),
-            );
-          }).toList(),
-        ],
-      ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -544,82 +497,88 @@ class _TagsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isWarning
-            ? color.withValues(alpha: 0.05)
-            : ColorPalette.cardBackground,
-        borderRadius: BorderRadius.circular(20),
-        border: isWarning
-            ? Border.all(
-                color: color.withValues(alpha: 0.2),
-                width: 1,
-              )
-            : null,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(width: 10),
-              Text(
-                title,
-                style: GoogleFonts.playfairDisplay(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: ColorPalette.textPrimary,
+    final body = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              style: GoogleFonts.sora(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: ColorPalette.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: tags.map((tag) {
+            return Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 8,
+              ),
+              decoration: BoxDecoration(
+                color: isWarning
+                    ? color.withValues(alpha: 0.1)
+                    : color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: color.withValues(alpha: 0.3),
+                  width: 1,
                 ),
               ),
-            ],
+              child: Text(
+                tag,
+                style: GoogleFonts.sora(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: color,
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+
+    if (isWarning) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: color.withValues(alpha: 0.2),
+            width: 1,
           ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: tags.map((tag) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: isWarning
-                      ? color.withValues(alpha: 0.1)
-                      : color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: color.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  tag,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: color,
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
+          boxShadow: [
+            BoxShadow(
+              color: ColorPalette.shadowLight,
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: body,
+      );
+    }
+
+    return PepsGlassCard(
+      borderRadius: 20,
+      padding: const EdgeInsets.all(20),
+      child: body,
     );
   }
 }
 
-/// Dosage and frequency card
+/// Dosage and frequency — two metric cards
 class _DosageCard extends StatelessWidget {
   final String? dosage;
   final String? frequency;
@@ -631,102 +590,113 @@ class _DosageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const goldColor = Color(0xFFD1A057);
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            goldColor.withValues(alpha: 0.1),
-            goldColor.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: goldColor.withValues(alpha: 0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (dosage != null) ...[
+          Expanded(
+            child: _DosageMetricTile(
+              label: 'DOSAGE',
+              value: dosage!,
+            ),
           ),
+          if (frequency != null) const SizedBox(width: 12),
         ],
-      ),
+        if (frequency != null)
+          Expanded(
+            child: _DosageMetricTile(
+              label: 'FREQUENCY',
+              value: frequency!,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _DosageMetricTile extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _DosageMetricTile({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PepsGlassCard(
+      borderRadius: 16,
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.medication_outlined, color: goldColor, size: 20),
-              const SizedBox(width: 10),
-              Text(
-                'Dosage & Frequency',
-                style: GoogleFonts.playfairDisplay(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: ColorPalette.textPrimary,
+          Text(
+            label,
+            style: GoogleFonts.dmMono(
+              fontSize: 10,
+              fontWeight: FontWeight.w400,
+              color: ColorPalette.textTertiary,
+              letterSpacing: 0.6,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: GoogleFonts.sora(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: ColorPalette.textPrimary,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReasoningGlassCard extends StatelessWidget {
+  final String content;
+
+  const _ReasoningGlassCard({required this.content});
+
+  @override
+  Widget build(BuildContext context) {
+    return PepsGlassCard(
+      borderRadius: 20,
+      padding: EdgeInsets.zero,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              width: 2,
+              decoration: const BoxDecoration(
+                color: ColorPalette.gold,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  bottomLeft: Radius.circular(20),
                 ),
               ),
-            ],
-          ),
-          if (dosage != null) ...[
-            const SizedBox(height: 16),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Dosage: ',
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: ColorPalette.textPrimary,
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 18, 20, 18),
+                child: Text(
+                  content,
+                  style: GoogleFonts.sora(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    fontStyle: FontStyle.italic,
+                    color: ColorPalette.textSecondary,
+                    height: 1.55,
                   ),
                 ),
-                Expanded(
-                  child: Text(
-                    dosage!,
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
-                      color: ColorPalette.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
-          if (frequency != null) ...[
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Frequency: ',
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: ColorPalette.textPrimary,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    frequency!,
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
-                      color: ColorPalette.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }

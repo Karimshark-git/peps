@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'features/onboarding/screens/welcome_screen.dart';
-import 'features/onboarding/screens/name_screen.dart';
-import 'features/onboarding/screens/goals_screen.dart';
-import 'features/onboarding/screens/biometrics_screen.dart';
-import 'features/onboarding/screens/lifestyle_screen.dart';
-import 'features/onboarding/screens/medical_screen.dart';
+import 'features/onboarding/screens/onboarding_personalization_shell.dart';
 import 'features/protocol/screens/protocol_screen.dart';
 import 'features/protocol/screens/protocol_building_screen.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/create_account_email_screen.dart';
 import 'features/auth/screens/email_verification_pending_screen.dart';
 import 'features/navigation/main_navigation.dart';
+import 'features/checkin/screens/check_in_screen.dart';
 import 'core/navigation/app_page_transitions.dart';
 
 /// App router with named routes and premium transitions
@@ -27,6 +24,7 @@ class AppRouter {
   static const String createAccountEmail = '/create-account-email';
   static const String emailVerificationPending = '/email-verification-pending';
   static const String home = '/home';
+  static const String checkIn = '/check-in';
   static const String nextScreenPlaceholder = '/next_screen_placeholder';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -38,27 +36,27 @@ class AppRouter {
         );
       case name:
         return AppPageTransitions.onboardingRoute(
-          const NameScreen(),
+          const OnboardingPersonalizationShell(initialPage: 0),
           settings: settings,
         );
       case goals:
         return AppPageTransitions.onboardingRoute(
-          const GoalsScreen(),
+          const OnboardingPersonalizationShell(initialPage: 1),
           settings: settings,
         );
       case biometrics:
         return AppPageTransitions.onboardingRoute(
-          const BiometricsScreen(),
+          const OnboardingPersonalizationShell(initialPage: 2),
           settings: settings,
         );
       case lifestyle:
         return AppPageTransitions.onboardingRoute(
-          const LifestyleScreen(),
+          const OnboardingPersonalizationShell(initialPage: 3),
           settings: settings,
         );
       case medical:
         return AppPageTransitions.onboardingRoute(
-          const MedicalScreen(),
+          const OnboardingPersonalizationShell(initialPage: 4),
           settings: settings,
         );
       case protocol:
@@ -89,6 +87,11 @@ class AppRouter {
       case home:
         return AppPageTransitions.onboardingRoute(
           const MainNavigation(),
+          settings: settings,
+        );
+      case checkIn:
+        return AppPageTransitions.cardPushRoute(
+          const CheckInScreen(),
           settings: settings,
         );
       case nextScreenPlaceholder:

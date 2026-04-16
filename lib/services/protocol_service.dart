@@ -4,23 +4,11 @@ import '../features/protocol/models/protocol_models.dart';
 /// Service for fetching protocol-related data from Supabase
 class ProtocolService {
   /// Fetches recommendations with peptide details for the current user
-  /// Returns a list of maps containing recommendation and peptide data
   static Future<List<Map<String, dynamic>>> getUserRecommendations() async {
     final user = supabase.auth.currentUser;
-    if (user == null) {
-      throw Exception('User not authenticated');
-    }
+    if (user == null) throw Exception('User not authenticated');
 
-    // Get user ID from users table
-    final userResponse = await supabase
-        .from('users')
-        .select('id, email')
-        .eq('auth_uid', user.id)
-        .single();
-
-    final userId = userResponse['id'] as String;
-
-    // Fetch recommendations with peptide details
+    // users.id IS the auth UID — no intermediate lookup needed
     final response = await supabase
         .from('recommendations')
         .select('''
@@ -38,61 +26,43 @@ class ProtocolService {
             goals_supported
           )
         ''')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .order('created_at', ascending: false);
 
     return List<Map<String, dynamic>>.from(response);
   }
 
-  /// Gets the current user's email or name
+  /// Gets the current user's email
   static Future<String?> getUserEmail() async {
     final user = supabase.auth.currentUser;
-    if (user == null) {
-      return null;
-    }
+    if (user == null) return null;
 
     try {
-      final userResponse = await supabase
+      final row = await supabase
           .from('users')
           .select('email')
-          .eq('auth_uid', user.id)
+          .eq('id', user.id)
           .maybeSingle();
-
-      return userResponse?['email'] as String? ?? user.email;
-    } catch (e) {
+      return row?['email'] as String? ?? user.email;
+    } catch (_) {
       return user.email;
     }
   }
 
   /// Fetches the latest onboarding response for the current user
-  /// Returns null if no onboarding data exists
   static Future<OnboardingSummary?> fetchLatestOnboardingForCurrentUser() async {
     final user = supabase.auth.currentUser;
-    if (user == null) {
-      throw Exception('User not authenticated');
-    }
+    if (user == null) throw Exception('User not authenticated');
 
-    // Get user ID from users table
-    final userResponse = await supabase
-        .from('users')
-        .select('id')
-        .eq('auth_uid', user.id)
-        .single();
-
-    final userId = userResponse['id'] as String;
-
-    // Fetch the most recent onboarding response
     final response = await supabase
         .from('onboarding_responses')
         .select('goals, lifestyle_factors, medical_conditions')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .order('created_at', ascending: false)
         .limit(1)
         .maybeSingle();
 
-    if (response == null) {
-      return null;
-    }
+    if (response == null) return null;
 
     return OnboardingSummary(
       goals: List<String>.from(response['goals'] as List<dynamic>? ?? []),
@@ -108,20 +78,8 @@ class ProtocolService {
   /// Fetches the protocol items (recommendations + peptides) for the current user
   static Future<List<ProtocolItem>> fetchProtocolForCurrentUser() async {
     final user = supabase.auth.currentUser;
-    if (user == null) {
-      throw Exception('User not authenticated');
-    }
+    if (user == null) throw Exception('User not authenticated');
 
-    // Get user ID from users table
-    final userResponse = await supabase
-        .from('users')
-        .select('id')
-        .eq('auth_uid', user.id)
-        .single();
-
-    final userId = userResponse['id'] as String;
-
-    // Fetch recommendations with peptide details
     final response = await supabase
         .from('recommendations')
         .select('''
@@ -137,7 +95,7 @@ class ProtocolService {
             lifestyle_supported
           )
         ''')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .order('created_at', ascending: false);
 
     final recommendations = List<Map<String, dynamic>>.from(response);
@@ -168,40 +126,31 @@ class ProtocolService {
   }
 
   /// Fetches user profile data including user info and latest onboarding response
-  /// Returns a map with 'user' and 'onboarding' keys
   static Future<Map<String, dynamic>> fetchUserProfileData() async {
     final user = supabase.auth.currentUser;
-    if (user == null) {
-      throw Exception('User not authenticated');
-    }
+    if (user == null) throw Exception('User not authenticated');
 
-    // Get user ID from users table
-    final userResponse = await supabase
+    final userRow = await supabase
         .from('users')
         .select('id, email, created_at')
-        .eq('auth_uid', user.id)
+        .eq('id', user.id)
         .single();
 
-    final userId = userResponse['id'] as String;
-
-    // Fetch the most recent onboarding response
     final onboardingResponse = await supabase
         .from('onboarding_responses')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .order('created_at', ascending: false)
         .limit(1)
         .maybeSingle();
 
     return {
       'user': {
-        'id': userId,
-        'email': userResponse['email'] as String? ?? user.email,
-        'created_at': userResponse['created_at'],
+        'id': user.id,
+        'email': userRow['email'] as String? ?? user.email,
+        'created_at': userRow['created_at'],
       },
       'onboarding': onboardingResponse,
     };
   }
 }
-
-

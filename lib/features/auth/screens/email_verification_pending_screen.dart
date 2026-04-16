@@ -3,11 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/color_palette.dart';
+import '../../../core/widgets/peps_ambient_orbs.dart';
+import '../../../core/widgets/peps_glass_card.dart';
+import '../../../core/widgets/primary_button.dart';
 import '../../../services/supabase_client.dart';
 import '../../../services/auth_service.dart';
 import '../../../providers/auth_credentials_provider.dart';
 
-/// Email verification pending screen
+/// Email verification pending
 class EmailVerificationPendingScreen extends StatefulWidget {
   const EmailVerificationPendingScreen({super.key});
 
@@ -81,29 +84,26 @@ class _EmailVerificationPendingScreenState
       final email = credentialsProvider.email!;
       final password = credentialsProvider.password!;
 
-      // Attempt to sign in (will succeed if email is verified)
       final response = await supabase.auth.signInWithPassword(
         email: email,
         password: password,
       );
 
-      // Check if user is authenticated and email is verified
       final user = response.user;
       if (user != null) {
-        // Check if email is actually verified
         if (user.emailConfirmedAt == null) {
-          throw Exception('Email not yet verified. Please check your email and click the verification link.');
+          throw Exception(
+              'Email not yet verified. Please check your email and click the verification link.');
         }
 
-        // Clear credentials
         credentialsProvider.clearCredentials();
 
-        // Handle post-login (saves data and navigates)
         if (mounted) {
           await AuthService.handlePostLogin(context);
         }
       } else {
-        throw Exception('Email not yet verified. Please check your email and click the verification link.');
+        throw Exception(
+            'Email not yet verified. Please check your email and click the verification link.');
       }
     } catch (e) {
       setState(() {
@@ -133,116 +133,76 @@ class _EmailVerificationPendingScreenState
 
     return Scaffold(
       backgroundColor: ColorPalette.background,
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _pageFadeAnimation,
-          child: SlideTransition(
-            position: _pageSlideAnimation,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Icon
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: ColorPalette.gold.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.mark_email_read_outlined,
-                      size: 40,
-                      color: ColorPalette.gold,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Title
-                  Text(
-                    'Verify your email',
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w700,
-                      color: ColorPalette.textPrimary,
-                      height: 1.2,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Message
-                  Text(
-                    "We've sent a verification link to $email. Please confirm your email to activate your account.",
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: ColorPalette.textSecondary,
-                      height: 1.5,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 40),
-
-                  // Verify button
-                  Container(
-                    width: double.infinity,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          ColorPalette.gold,
-                          ColorPalette.gold.withValues(alpha: 0.9),
+      body: Stack(
+        children: [
+          const PepsAmbientOrbs(),
+          SafeArea(
+            child: FadeTransition(
+              opacity: _pageFadeAnimation,
+              child: SlideTransition(
+                position: _pageSlideAnimation,
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: PepsGlassCard(
+                      borderRadius: 20,
+                      padding: const EdgeInsets.all(28),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: ColorPalette.accentDim,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: ColorPalette.accentBorder),
+                        ),
+                        child: const Icon(
+                          Icons.check_circle_rounded,
+                          size: 40,
+                          color: ColorPalette.gold,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      Text(
+                        'Check your inbox',
+                        style: GoogleFonts.sora(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w500,
+                          color: ColorPalette.textPrimary,
+                          height: 1.2,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "We've sent a verification link to $email. Please confirm your email to activate your account.",
+                        style: GoogleFonts.sora(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: ColorPalette.textSecondary,
+                          height: 1.55,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32),
+                      PrimaryButton(
+                        text: "I've verified →",
+                        isLoading: _isVerifying,
+                        isEnabled: !_isVerifying,
+                        onPressed: _handleVerify,
+                      ),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: _isVerifying ? null : _handleVerify,
-                        borderRadius: BorderRadius.circular(20),
-                        child: Center(
-                          child: _isVerifying
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                )
-                              : Text(
-                                  "I've Verified My Email",
-                                  style: GoogleFonts.inter(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                        ),
-                      ),
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
-

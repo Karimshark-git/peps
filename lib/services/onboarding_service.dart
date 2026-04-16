@@ -72,8 +72,10 @@ class OnboardingService {
       // Remove null values
       onboardingData.removeWhere((key, value) => value == null);
 
-      // Insert into onboarding_responses table
-      await supabase.from('onboarding_responses').insert(onboardingData);
+      // Upsert into onboarding_responses table (safe for returning users)
+      await supabase
+          .from('onboarding_responses')
+          .upsert(onboardingData, onConflict: 'user_id');
     } catch (e) {
       throw Exception('Failed to save onboarding response: $e');
     }

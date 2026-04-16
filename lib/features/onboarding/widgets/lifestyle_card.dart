@@ -197,7 +197,7 @@ class _LifestyleCardState extends State<LifestyleCard>
                         AnimatedOpacity(
                           opacity: _selectionAnimation.value,
                           duration: const Duration(milliseconds: 150),
-                          child: Icon(
+                          child: const Icon(
                             Icons.check_circle_rounded,
                             color: goldColor,
                             size: 24,

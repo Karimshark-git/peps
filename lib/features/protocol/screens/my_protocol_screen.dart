@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/color_palette.dart';
+import '../../../core/widgets/peps_glass_card.dart';
+import '../../../core/widgets/peps_section_label.dart';
 import '../../../core/navigation/app_page_transitions.dart';
 import '../../../services/protocol_service.dart';
 import '../../../services/supabase_client.dart';
@@ -23,6 +25,7 @@ class _MyProtocolScreenState extends State<MyProtocolScreen>
   List<ProtocolItem> _protocolItems = [];
   bool _isLoading = true;
   String? _error;
+  bool _isLoggingOut = false;
   late AnimationController _pageAnimationController;
   late Animation<double> _pageFadeAnimation;
   late Animation<Offset> _pageSlideAnimation;
@@ -92,6 +95,31 @@ class _MyProtocolScreenState extends State<MyProtocolScreen>
     }
   }
 
+  Future<void> _handleLogout() async {
+    if (_isLoggingOut) return;
+    setState(() => _isLoggingOut = true);
+    try {
+      await supabase.auth.signOut();
+      if (mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.welcome,
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error signing out: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoggingOut = false);
+    }
+  }
+
   /// Gets top 2-3 goals for display
   List<String> _getTopGoals() {
     if (_onboardingSummary == null || _onboardingSummary!.goals.isEmpty) {
@@ -158,7 +186,7 @@ class _MyProtocolScreenState extends State<MyProtocolScreen>
           const SizedBox(height: 16),
           Text(
             'Loading your protocol...',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.sora(
               fontSize: 16,
               color: ColorPalette.textSecondary,
             ),
@@ -175,7 +203,7 @@ class _MyProtocolScreenState extends State<MyProtocolScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.error_outline,
               size: 64,
               color: ColorPalette.textSecondary,
@@ -183,7 +211,7 @@ class _MyProtocolScreenState extends State<MyProtocolScreen>
             const SizedBox(height: 16),
             Text(
               "We couldn't load your protocol right now.",
-              style: GoogleFonts.inter(
+              style: GoogleFonts.sora(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: ColorPalette.textPrimary,
@@ -193,7 +221,7 @@ class _MyProtocolScreenState extends State<MyProtocolScreen>
             const SizedBox(height: 8),
             Text(
               _error ?? 'Unknown error',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.sora(
                 fontSize: 14,
                 color: ColorPalette.textSecondary,
               ),
@@ -201,10 +229,10 @@ class _MyProtocolScreenState extends State<MyProtocolScreen>
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _loadData,
+              onPressed: _isLoggingOut ? null : _loadData,
               style: ElevatedButton.styleFrom(
                 backgroundColor: ColorPalette.gold,
-                foregroundColor: Colors.white,
+                foregroundColor: ColorPalette.buttonOnAccent,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 12,
@@ -212,11 +240,34 @@ class _MyProtocolScreenState extends State<MyProtocolScreen>
               ),
               child: Text(
                 'Retry',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.sora(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                 ),
               ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: _isLoggingOut ? null : _handleLogout,
+              child: _isLoggingOut
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          ColorPalette.gold,
+                        ),
+                      ),
+                    )
+                  : Text(
+                      'Sign out',
+                      style: GoogleFonts.sora(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: ColorPalette.gold,
+                      ),
+                    ),
             ),
           ],
         ),
@@ -231,22 +282,12 @@ class _MyProtocolScreenState extends State<MyProtocolScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
+            PepsGlassCard(
+              borderRadius: 20,
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: ColorPalette.cardBackground,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
               child: Column(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.medical_services_outlined,
                     size: 64,
                     color: ColorPalette.textSecondary,
@@ -254,7 +295,7 @@ class _MyProtocolScreenState extends State<MyProtocolScreen>
                   const SizedBox(height: 16),
                   Text(
                     'No protocol found yet.',
-                    style: GoogleFonts.playfairDisplay(
+                    style: GoogleFonts.sora(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
                       color: ColorPalette.textPrimary,
@@ -264,7 +305,7 @@ class _MyProtocolScreenState extends State<MyProtocolScreen>
                   const SizedBox(height: 8),
                   Text(
                     'Complete onboarding to generate your personalized protocol.',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.sora(
                       fontSize: 14,
                       color: ColorPalette.textSecondary,
                       height: 1.5,
@@ -278,7 +319,7 @@ class _MyProtocolScreenState extends State<MyProtocolScreen>
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorPalette.gold,
-                      foregroundColor: Colors.white,
+                      foregroundColor: ColorPalette.buttonOnAccent,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
                         vertical: 12,
@@ -286,7 +327,7 @@ class _MyProtocolScreenState extends State<MyProtocolScreen>
                     ),
                     child: Text(
                       'Start Onboarding',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.sora(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),
@@ -311,10 +352,7 @@ class _MyProtocolScreenState extends State<MyProtocolScreen>
         children: [
           const SizedBox(height: 32),
           // Header Section
-          _HeaderSection(
-            topGoals: topGoals,
-            onboardingSummary: _onboardingSummary,
-          ),
+          _HeaderSection(topGoals: topGoals),
           const SizedBox(height: 32),
           // Protocol Summary Card
           _ProtocolSummaryCard(
@@ -333,6 +371,7 @@ class _MyProtocolScreenState extends State<MyProtocolScreen>
               ),
               child: _PremiumPeptideCard(
                 protocolItem: item,
+                chipStyleIndex: index,
                 onTap: () {
                   Navigator.push(
                     context,
@@ -353,15 +392,11 @@ class _MyProtocolScreenState extends State<MyProtocolScreen>
   }
 }
 
-/// Header section with title, subtitle, and goal chips
+/// Header — title, physician pill, goals (glass)
 class _HeaderSection extends StatelessWidget {
   final List<String> topGoals;
-  final OnboardingSummary? onboardingSummary;
 
-  const _HeaderSection({
-    required this.topGoals,
-    this.onboardingSummary,
-  });
+  const _HeaderSection({required this.topGoals});
 
   @override
   Widget build(BuildContext context) {
@@ -369,65 +404,85 @@ class _HeaderSection extends StatelessWidget {
         ? topGoals.take(2).join(', ')
         : 'your wellness goals';
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFFF8F3EC),
-            const Color(0xFFF3EDE4),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-      ),
+    return PepsGlassCard(
+      borderRadius: 20,
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Your Personalized Protocol',
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 32,
-              fontWeight: FontWeight.w700,
+            'My Protocol',
+            style: GoogleFonts.sora(
+              fontSize: 22,
+              fontWeight: FontWeight.w500,
               color: ColorPalette.textPrimary,
-              height: 1.2,
+              height: 1.25,
+              letterSpacing: -0.2,
             ),
           ),
           const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: ColorPalette.accentDim,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: ColorPalette.accentBorder),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: ColorPalette.gold,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'PENDING PHYSICIAN REVIEW',
+                  style: GoogleFonts.dmMono(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                    color: ColorPalette.gold,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           Text(
             'Built around your goals: $goalsText.',
-            style: GoogleFonts.inter(
-              fontSize: 16,
+            style: GoogleFonts.sora(
+              fontSize: 14,
               fontWeight: FontWeight.w400,
               color: ColorPalette.textSecondary,
-              height: 1.5,
+              height: 1.55,
             ),
           ),
           if (topGoals.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: topGoals.map((goal) {
                 return Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
+                    horizontal: 12,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: ColorPalette.gold.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: ColorPalette.gold.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
+                    color: ColorPalette.accentDim,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: ColorPalette.accentBorder),
                   ),
                   child: Text(
                     goal,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                    style: GoogleFonts.sora(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
                       color: ColorPalette.gold,
                     ),
                   ),
@@ -455,34 +510,17 @@ class _ProtocolSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return PepsGlassCard(
+      borderRadius: 20,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Protocol Summary',
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: ColorPalette.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 16),
+          const PepsSectionLabel(text: 'Protocol summary'),
+          const SizedBox(height: 12),
           Text(
             'Total peptides in your protocol: $totalPeptides',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.sora(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: ColorPalette.textPrimary,
@@ -492,7 +530,7 @@ class _ProtocolSummaryCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Primary focus: $dominantGoal',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.sora(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: ColorPalette.textSecondary,
@@ -503,7 +541,7 @@ class _ProtocolSummaryCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Secondary focus: $secondaryGoal',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.sora(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: ColorPalette.textSecondary,
@@ -516,11 +554,12 @@ class _ProtocolSummaryCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: ColorPalette.background,
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: ColorPalette.cardBorder),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
+                const Icon(
                   Icons.info_outline,
                   size: 16,
                   color: ColorPalette.textSecondary,
@@ -529,7 +568,7 @@ class _ProtocolSummaryCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'This protocol will be reviewed and confirmed by a licensed doctor before any prescriptions or shipments.',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.sora(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                       color: ColorPalette.textSecondary,
@@ -546,201 +585,169 @@ class _ProtocolSummaryCard extends StatelessWidget {
   }
 }
 
-/// Premium peptide card matching onboarding style
+/// Peptide row card — glass, teal/blue category alternation
 class _PremiumPeptideCard extends StatelessWidget {
   final ProtocolItem protocolItem;
+  final int chipStyleIndex;
   final VoidCallback onTap;
 
   const _PremiumPeptideCard({
     required this.protocolItem,
+    required this.chipStyleIndex,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    const goldColor = Color(0xFFD1A057);
+    final useTealAccent = chipStyleIndex % 2 == 0;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.white,
-            const Color(0xFFF8F3EC),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Peptide name
-          Text(
-            protocolItem.peptideName,
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1A1A1A),
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 10),
-          // Category badge
-          if (protocolItem.peptideCategory.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
-              ),
-              decoration: BoxDecoration(
-                color: ColorPalette.cardBackground,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                protocolItem.peptideCategory,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: PepsGlassCard(
+          borderRadius: 20,
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                protocolItem.peptideName,
+                style: GoogleFonts.sora(
+                  fontSize: 18,
                   fontWeight: FontWeight.w500,
-                  color: ColorPalette.textSecondary,
+                  color: ColorPalette.textPrimary,
+                  height: 1.25,
                 ),
               ),
-            ),
-          if (protocolItem.peptideCategory.isNotEmpty) const SizedBox(height: 14),
-          // Summary
-          Text(
-            protocolItem.peptideSummary,
-            style: GoogleFonts.inter(
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
-              color: ColorPalette.textPrimary,
-              height: 1.5,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          // Short benefits (1-3 bullet points)
-          if (protocolItem.shortBenefits.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            ...protocolItem.shortBenefits.take(3).map((benefit) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '• ',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        color: goldColor,
-                        fontWeight: FontWeight.bold,
-                      ),
+              if (protocolItem.peptideCategory.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: useTealAccent
+                        ? ColorPalette.accentDim
+                        : ColorPalette.blueDim,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: useTealAccent
+                          ? ColorPalette.accentBorder
+                          : ColorPalette.blueBorder,
                     ),
-                    Expanded(
-                      child: Text(
-                        benefit,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: ColorPalette.textPrimary,
-                          height: 1.5,
+                  ),
+                  child: Text(
+                    protocolItem.peptideCategory.toUpperCase(),
+                    style: GoogleFonts.dmMono(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
+                      color: useTealAccent
+                          ? ColorPalette.gold
+                          : ColorPalette.blueAccent,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Text(
+                protocolItem.peptideSummary,
+                style: GoogleFonts.sora(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: ColorPalette.textSecondary,
+                  height: 1.5,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (protocolItem.shortBenefits.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final benefit
+                        in protocolItem.shortBenefits.take(3))
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: ColorPalette.accentDim,
+                          borderRadius: BorderRadius.circular(12),
+                          border:
+                              Border.all(color: ColorPalette.accentBorder),
+                        ),
+                        child: Text(
+                          benefit,
+                          style: GoogleFonts.sora(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: ColorPalette.textPrimary,
+                            height: 1.3,
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
-              );
-            }).toList(),
-          ],
-          // Reasoning
-          if (protocolItem.reasoning.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: ColorPalette.background,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.lightbulb_outline,
-                    size: 16,
-                    color: goldColor,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Why this is in your protocol:',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: ColorPalette.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          protocolItem.reasoning.length > 150
-                              ? '${protocolItem.reasoning.substring(0, 150)}...'
-                              : protocolItem.reasoning,
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                            color: ColorPalette.textSecondary,
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
+              ],
+              if (protocolItem.reasoning.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: ColorPalette.background,
+                    borderRadius: BorderRadius.circular(12),
+                    border: const Border(
+                      left: BorderSide(
+                        color: ColorPalette.gold,
+                        width: 2,
+                      ),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 12),
-          // View Details CTA
-          InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 4,
-              ),
-              child: Row(
+                  child: Text(
+                    protocolItem.reasoning.length > 150
+                        ? '${protocolItem.reasoning.substring(0, 150)}...'
+                        : protocolItem.reasoning,
+                    style: GoogleFonts.sora(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      fontStyle: FontStyle.italic,
+                      color: ColorPalette.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     'View Details',
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
+                    style: GoogleFonts.sora(
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: goldColor,
+                      color: ColorPalette.gold,
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Icon(
+                  const Icon(
                     Icons.arrow_forward_ios_rounded,
                     size: 14,
-                    color: goldColor,
+                    color: ColorPalette.gold,
                   ),
                 ],
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

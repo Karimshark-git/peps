@@ -49,7 +49,7 @@ class GoalOptionCard extends StatelessWidget {
               ),
             ),
             if (isSelected)
-              Icon(
+              const Icon(
                 Icons.check_circle,
                 color: ColorPalette.gold,
                 size: 24,

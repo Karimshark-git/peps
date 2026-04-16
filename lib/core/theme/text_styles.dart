@@ -2,74 +2,85 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'color_palette.dart';
 
-/// Text styles for PEPS app using luxury wellness aesthetic
+/// PEPS typography — Sora + DM Mono
 class TextStyles {
-  // Headings - Playfair Display
-  static TextStyle headingLarge = GoogleFonts.playfairDisplay(
-    fontSize: 38,
-    fontWeight: FontWeight.w700,
+  static TextStyle headingLarge = GoogleFonts.sora(
+    fontSize: 36,
+    fontWeight: FontWeight.w600,
     color: ColorPalette.textPrimary,
     height: 1.2,
+    letterSpacing: -0.5,
   );
-  
-  static TextStyle headingMedium = GoogleFonts.playfairDisplay(
-    fontSize: 28,
-    fontWeight: FontWeight.w600,
+
+  static TextStyle headingMedium = GoogleFonts.sora(
+    fontSize: 26,
+    fontWeight: FontWeight.w500,
     color: ColorPalette.textPrimary,
     height: 1.3,
+    letterSpacing: -0.3,
   );
-  
-  static TextStyle headingSmall = GoogleFonts.playfairDisplay(
-    fontSize: 22,
-    fontWeight: FontWeight.w600,
+
+  static TextStyle headingSmall = GoogleFonts.sora(
+    fontSize: 20,
+    fontWeight: FontWeight.w500,
     color: ColorPalette.textPrimary,
     height: 1.3,
+    letterSpacing: -0.2,
   );
-  
-  // Body text - Inter
-  static TextStyle bodyLarge = GoogleFonts.inter(
-    fontSize: 18,
-    fontWeight: FontWeight.w400,
-    color: ColorPalette.textPrimary,
-    height: 1.5,
-  );
-  
-  static TextStyle bodyMedium = GoogleFonts.inter(
+
+  static TextStyle bodyLarge = GoogleFonts.sora(
     fontSize: 16,
     fontWeight: FontWeight.w400,
     color: ColorPalette.textPrimary,
-    height: 1.5,
+    height: 1.55,
   );
-  
-  static TextStyle bodySmall = GoogleFonts.inter(
+
+  static TextStyle bodyMedium = GoogleFonts.sora(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: ColorPalette.textSecondary,
+    height: 1.55,
+  );
+
+  static TextStyle bodySmall = GoogleFonts.sora(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    color: ColorPalette.textTertiary,
     height: 1.5,
   );
-  
-  // Button text
-  static TextStyle buttonText = GoogleFonts.inter(
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
-    color: Colors.white,
-    letterSpacing: 0.5,
+
+  static TextStyle labelMono = GoogleFonts.dmMono(
+    fontSize: 10,
+    fontWeight: FontWeight.w400,
+    color: ColorPalette.textTertiary,
+    letterSpacing: 0.6,
   );
-  
-  // Subtitle
-  static TextStyle subtitle = GoogleFonts.inter(
-    fontSize: 16,
+
+  static TextStyle sectionLabelMono = GoogleFonts.dmMono(
+    fontSize: 10,
+    fontWeight: FontWeight.w400,
+    color: ColorPalette.textTeal,
+    letterSpacing: 0.6,
+  );
+
+  static TextStyle buttonText = GoogleFonts.sora(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: ColorPalette.buttonOnAccent,
+    letterSpacing: -0.2,
+  );
+
+  static TextStyle subtitle = GoogleFonts.sora(
+    fontSize: 14,
     fontWeight: FontWeight.w400,
     color: ColorPalette.textSecondary,
-    height: 1.5,
+    height: 1.55,
   );
-  
-  // Placeholder text
-  static TextStyle placeholder = GoogleFonts.inter(
+
+  static TextStyle placeholder = GoogleFonts.sora(
     fontSize: 16,
     fontWeight: FontWeight.w400,
     color: ColorPalette.textPlaceholder,
-    height: 1.5,
+    height: 1.55,
   );
 }
-
