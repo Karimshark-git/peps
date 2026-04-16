@@ -86,10 +86,10 @@ class _OnboardingProgressBarState extends State<OnboardingProgressBar>
       animation: _animation,
       builder: (context, child) {
         return Container(
-          height: 4,
+          height: 3,
           decoration: BoxDecoration(
             color: ColorPalette.progressBackground,
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(1.5),
           ),
           child: FractionallySizedBox(
             alignment: Alignment.centerLeft,
@@ -97,7 +97,7 @@ class _OnboardingProgressBarState extends State<OnboardingProgressBar>
             child: Container(
               decoration: BoxDecoration(
                 color: ColorPalette.progressFill,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(1.5),
               ),
             ),
           ),

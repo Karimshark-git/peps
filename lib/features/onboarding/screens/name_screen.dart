@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/widgets/onboarding_progress_bar.dart';
-import '../../../core/theme/color_palette.dart';
+import 'package:provider/provider.dart';
+
+import '../../../core/widgets/peps_min_height_scroll_view.dart';
+import '../../../core/widgets/primary_button.dart';
 import '../provider/onboarding_provider.dart';
 
-/// Beautiful name input screen - first step of onboarding
-class NameScreen extends StatefulWidget {
-  const NameScreen({super.key});
+/// Body for step 1 — chrome (back, progress, logo) lives in [OnboardingPersonalizationShell].
+class NamePersonalizationPage extends StatefulWidget {
+  final VoidCallback onContinueToNextStep;
+
+  const NamePersonalizationPage({
+    super.key,
+    required this.onContinueToNextStep,
+  });
 
   @override
-  State<NameScreen> createState() => _NameScreenState();
+  State<NamePersonalizationPage> createState() => NamePersonalizationPageState();
 }
 
-class _NameScreenState extends State<NameScreen>
-    with TickerProviderStateMixin {
+class NamePersonalizationPageState extends State<NamePersonalizationPage>
+    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   final TextEditingController _nameController = TextEditingController();
   final FocusNode _nameFocusNode = FocusNode();
   late AnimationController _fadeController;
@@ -23,37 +29,35 @@ class _NameScreenState extends State<NameScreen>
   double _dragCurrentX = 0.0;
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void initState() {
     super.initState();
 
-    // Fade animation for content
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOutCubic,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _fadeController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
 
-    // Load saved name from provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<OnboardingProvider>(context, listen: false);
-      if (provider.model.firstName != null && provider.model.firstName!.isNotEmpty) {
+      if (provider.model.firstName != null &&
+          provider.model.firstName!.isNotEmpty) {
         _nameController.text = provider.model.firstName!;
         setState(() {});
       }
       _fadeController.forward();
-      // Removed auto-focus to prevent keyboard from opening automatically
     });
 
-    _nameFocusNode.addListener(() {
-      setState(() {});
-    });
+    _nameFocusNode.addListener(() => setState(() {}));
   }
 
   @override
@@ -64,20 +68,7 @@ class _NameScreenState extends State<NameScreen>
     super.dispose();
   }
 
-  bool get _isNameValid {
-    return _nameController.text.trim().isNotEmpty &&
-        _nameController.text.trim().length >= 2;
-  }
-
-  void _handleNext() {
-    if (!_isNameValid) return;
-
-    final name = _nameController.text.trim();
-    final provider = Provider.of<OnboardingProvider>(context, listen: false);
-    provider.updateFirstName(name);
-
-    Navigator.pushNamed(context, '/goals');
-  }
+  bool get _canContinue => _nameController.text.trim().isNotEmpty;
 
   void _saveName() {
     final name = _nameController.text.trim();
@@ -87,8 +78,19 @@ class _NameScreenState extends State<NameScreen>
     }
   }
 
+  /// Called from shell chrome back before [Navigator.pop].
+  void persistToProvider() => _saveName();
+
+  void _handleNext() {
+    if (!_canContinue) return;
+    FocusScope.of(context).unfocus();
+    _saveName();
+    widget.onContinueToNextStep();
+  }
+
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final isFocused = _nameFocusNode.hasFocus;
 
     return GestureDetector(
@@ -100,193 +102,188 @@ class _NameScreenState extends State<NameScreen>
       },
       onHorizontalDragEnd: (details) {
         final dragDistance = _dragCurrentX - _dragStartX;
-        // Swipe right (from left to right) to go back
         if (details.primaryVelocity != null &&
             details.primaryVelocity! > 300 &&
             dragDistance > 50) {
+          FocusScope.of(context).unfocus();
           _saveName();
           Navigator.pop(context);
         }
       },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF9F6F1), // Cream background - matches goals screen
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: PepsMinHeightScrollView(
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Progress bar
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 0),
-                child: OnboardingProgressBar(stepIndex: 1, totalSteps: 6),
-              ),
-              // Content
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 60),
-                      // Title
-                      Text(
-                        'What do we call you?',
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 36,
-                          fontWeight: FontWeight.w700,
-                          color: ColorPalette.textPrimary,
-                          height: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      // Subtitle
-                      Text(
-                        'We\'d love to personalize your experience.',
-                        style: GoogleFonts.inter(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w400,
-                          color: ColorPalette.textSecondary,
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 48),
-                      // Name input field
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'First Name',
-                            style: GoogleFonts.inter(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: ColorPalette.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          // Animated input container
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeOutCubic,
-                            decoration: BoxDecoration(
-                              color: ColorPalette.cardBackground,
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(
-                                color: isFocused
-                                    ? ColorPalette.gold
-                                    : Colors.transparent,
-                                width: isFocused ? 2.5 : 0,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: isFocused
-                                      ? ColorPalette.gold.withValues(alpha: 0.2)
-                                      : Colors.black.withValues(alpha: 0.05),
-                                  blurRadius: isFocused ? 16 : 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Transform.scale(
-                              scale: isFocused ? 1.01 : 1.0,
-                              child: TextField(
-                                controller: _nameController,
-                                focusNode: _nameFocusNode,
-                                textCapitalization: TextCapitalization.words,
-                                style: GoogleFonts.inter(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w500,
-                                  color: ColorPalette.textPrimary,
-                                ),
-                                decoration: InputDecoration(
-                                  hintText: 'Enter your first name',
-                                  hintStyle: GoogleFonts.inter(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w400,
-                                    color: ColorPalette.textPlaceholder,
-                                  ),
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 22,
-                                  ),
-                                ),
-                                onChanged: (_) {
-                                  setState(() {});
-                                  // Button animation will be handled by AnimatedBuilder
-                                },
-                                onSubmitted: (_) {
-                                  if (_isNameValid) {
-                                    _handleNext();
-                                  }
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 80),
-                      // Next button
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOutCubic,
-                        width: double.infinity,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          gradient: _isNameValid
-                              ? LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    const Color(0xFFC8A96A),
-                                    const Color(0xFFC8A96A).withValues(alpha: 0.9),
-                                  ],
-                                )
-                              : null,
-                          color: _isNameValid
-                              ? null
-                              : const Color(0xFFE8DCC4).withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: _isNameValid
-                              ? [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.15),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 6),
-                                  ),
-                                ]
-                              : [],
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: _isNameValid ? _handleNext : null,
-                            borderRadius: BorderRadius.circular(20),
-                            child: Center(
-                              child: Text(
-                                'Continue',
-                                style: GoogleFonts.inter(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: _isNameValid
-                                      ? Colors.white
-                                      : Colors.white.withValues(alpha: 0.6),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                    ],
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'What should we\ncall you?',
+                    style: GoogleFonts.sora(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xE6FFFFFF),
+                      height: 1.25,
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "We'll personalize your protocol around you.",
+                    style: GoogleFonts.sora(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0x8CFFFFFF),
+                      height: 1.55,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    'FIRST NAME',
+                    style: GoogleFonts.sora(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF3ECFA0),
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _NameGlassTextField(
+                    controller: _nameController,
+                    focusNode: _nameFocusNode,
+                    isFocused: isFocused,
+                    scrollPadding: EdgeInsets.only(
+                      bottom:
+                          MediaQuery.viewInsetsOf(context).bottom + 120,
+                    ),
+                    onChanged: (_) => setState(() {}),
+                    onSubmitted: (_) {
+                      if (_canContinue) _handleNext();
+                    },
+                  ),
+                ],
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 24),
+                  Container(
+                    decoration: const BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0x4D3ECFA0),
+                          blurRadius: 20,
+                          spreadRadius: -4,
+                          offset: Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: PrimaryButton(
+                      text: 'Continue →',
+                      textColor: const Color(0xFF04201A),
+                      isEnabled: _canContinue,
+                      onPressed: _canContinue ? _handleNext : null,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                ],
               ),
             ],
           ),
         ),
       ),
-      ),
     );
   }
 }
 
+class _NameGlassTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final bool isFocused;
+  final EdgeInsets scrollPadding;
+  final ValueChanged<String> onChanged;
+  final ValueChanged<String> onSubmitted;
+
+  const _NameGlassTextField({
+    required this.controller,
+    required this.focusNode,
+    required this.isFocused,
+    this.scrollPadding = const EdgeInsets.all(20.0),
+    required this.onChanged,
+    required this.onSubmitted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          color: const Color(0x14FFFFFF),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isFocused
+                ? const Color(0xFF3ECFA0)
+                : const Color(0x1AFFFFFF),
+            width: isFocused ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              height: 1,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Colors.transparent,
+                    Color(0x3DFFFFFF),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+            TextField(
+              controller: controller,
+              focusNode: focusNode,
+              scrollPadding: scrollPadding,
+              cursorColor: const Color(0xFF3ECFA0),
+              textCapitalization: TextCapitalization.words,
+              style: GoogleFonts.sora(
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                color: const Color(0xE6FFFFFF),
+              ),
+              decoration: InputDecoration(
+                hintText: 'Enter your first name',
+                hintStyle: GoogleFonts.sora(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  color: const Color(0x4DFFFFFF),
+                ),
+                border: InputBorder.none,
+                isCollapsed: false,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 18,
+                ),
+              ),
+              onChanged: onChanged,
+              onSubmitted: onSubmitted,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

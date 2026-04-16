@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/color_palette.dart';
+import '../../../core/widgets/peps_ambient_orbs.dart';
+import '../../../core/widgets/primary_button.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/supabase_client.dart';
 
-/// Email login/signup screen with password and magic link options
+/// Email login with password and magic link
 class EmailLoginScreen extends StatefulWidget {
   const EmailLoginScreen({super.key});
 
@@ -74,7 +76,6 @@ class _EmailLoginScreenState extends State<EmailLoginScreen>
         password: password,
       );
 
-      // Check if user is authenticated
       if (supabase.auth.currentUser != null) {
         if (mounted) {
           await AuthService.handlePostLogin(context);
@@ -113,7 +114,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen>
             content: Text(
               'Magic link sent to $email. Check your inbox!',
             ),
-            backgroundColor: ColorPalette.gold,
+            backgroundColor: ColorPalette.cardBackground,
             duration: const Duration(seconds: 4),
           ),
         );
@@ -134,6 +135,39 @@ class _EmailLoginScreenState extends State<EmailLoginScreen>
     }
   }
 
+  Future<void> _forgotPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter your email first'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    try {
+      await supabase.auth.resetPasswordForEmail(email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Reset link sent to $email'),
+            backgroundColor: ColorPalette.gold,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -143,99 +177,103 @@ class _EmailLoginScreenState extends State<EmailLoginScreen>
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: ColorPalette.textPrimary),
-          onPressed: () {
-            // Go back to login screen (previous screen)
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _pageFadeAnimation,
-          child: SlideTransition(
-            position: _pageSlideAnimation,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 32),
-                    // Title
-                    Text(
-                      'Login',
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w700,
-                        color: ColorPalette.textPrimary,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Subtitle
-                    Text(
-                      'Welcome back! Sign in to continue.',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: ColorPalette.textSecondary,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Email field
-                    _EmailTextField(
-                      controller: _emailController,
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Password field
-                    _PasswordTextField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      onToggleVisibility: () {
-                        setState(() => _obscurePassword = !_obscurePassword);
-                      },
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Login button
-                    _AuthButton(
-                      text: 'Login',
-                      onPressed: _handleEmailAuth,
-                      isLoading: _isLoading,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Magic link button
-                    Center(
-                      child: TextButton(
-                        onPressed: _isLoading ? null : _handleMagicLink,
-                        child: Text(
-                          'Use magic link instead',
-                          style: GoogleFonts.inter(
-                            fontSize: 15,
+      body: Stack(
+        children: [
+          const PepsAmbientOrbs(),
+          SafeArea(
+            child: FadeTransition(
+              opacity: _pageFadeAnimation,
+              child: SlideTransition(
+                position: _pageSlideAnimation,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 32),
+                        Text(
+                          'Login',
+                          style: GoogleFonts.sora(
+                            fontSize: 28,
                             fontWeight: FontWeight.w500,
-                            color: ColorPalette.gold,
+                            color: ColorPalette.textPrimary,
+                            height: 1.2,
+                            letterSpacing: -0.3,
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Welcome back! Sign in to continue.',
+                          style: GoogleFonts.sora(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: ColorPalette.textSecondary,
+                            height: 1.55,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        _EmailTextField(controller: _emailController),
+                        const SizedBox(height: 20),
+                        _PasswordTextField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          onToggleVisibility: () {
+                            setState(() => _obscurePassword = !_obscurePassword);
+                          },
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: _isLoading ? null : _forgotPassword,
+                            child: Text(
+                              'Forgot password?',
+                              style: GoogleFonts.sora(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                color: ColorPalette.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        PrimaryButton(
+                          text: 'Sign in',
+                          isLoading: _isLoading,
+                          onPressed: _handleEmailAuth,
+                        ),
+                        const SizedBox(height: 16),
+                        Center(
+                          child: TextButton(
+                            onPressed: _isLoading ? null : _handleMagicLink,
+                            child: Text(
+                              'Use magic link instead',
+                              style: GoogleFonts.sora(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: ColorPalette.gold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                      ],
                     ),
-                    const SizedBox(height: 32),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-/// Premium email text field
 class _EmailTextField extends StatelessWidget {
   final TextEditingController controller;
 
@@ -246,34 +284,32 @@ class _EmailTextField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       keyboardType: TextInputType.emailAddress,
+      cursorColor: ColorPalette.gold,
       autofillHints: const [AutofillHints.email],
+      style: GoogleFonts.sora(
+        fontSize: 16,
+        color: ColorPalette.textPrimary,
+      ),
       decoration: InputDecoration(
         labelText: 'Email',
         hintText: 'your@email.com',
+        labelStyle: GoogleFonts.sora(color: ColorPalette.textSecondary),
         prefixIcon: const Icon(Icons.email_outlined, color: ColorPalette.gold),
         filled: true,
         fillColor: ColorPalette.cardBackground,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: ColorPalette.cardBorder),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: ColorPalette.cardBorder),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: ColorPalette.gold, width: 2),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: ColorPalette.gold, width: 1),
         ),
-        labelStyle: GoogleFonts.inter(
-          color: ColorPalette.textSecondary,
-        ),
-        hintStyle: GoogleFonts.inter(
-          color: ColorPalette.textPlaceholder,
-        ),
-      ),
-      style: GoogleFonts.inter(
-        color: ColorPalette.textPrimary,
+        hintStyle: GoogleFonts.sora(color: ColorPalette.textPlaceholder),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -288,7 +324,6 @@ class _EmailTextField extends StatelessWidget {
   }
 }
 
-/// Premium password text field
 class _PasswordTextField extends StatelessWidget {
   final TextEditingController controller;
   final bool obscureText;
@@ -305,14 +340,22 @@ class _PasswordTextField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
+      cursorColor: ColorPalette.gold,
       autofillHints: const [AutofillHints.password],
+      style: GoogleFonts.sora(
+        fontSize: 16,
+        color: ColorPalette.textPrimary,
+      ),
       decoration: InputDecoration(
         labelText: 'Password',
         hintText: 'Enter your password',
+        labelStyle: GoogleFonts.sora(color: ColorPalette.textSecondary),
         prefixIcon: const Icon(Icons.lock_outline, color: ColorPalette.gold),
         suffixIcon: IconButton(
           icon: Icon(
-            obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+            obscureText
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined,
             color: ColorPalette.textSecondary,
           ),
           onPressed: onToggleVisibility,
@@ -320,26 +363,18 @@ class _PasswordTextField extends StatelessWidget {
         filled: true,
         fillColor: ColorPalette.cardBackground,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: ColorPalette.cardBorder),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: ColorPalette.cardBorder),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: ColorPalette.gold, width: 2),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: ColorPalette.gold, width: 1),
         ),
-        labelStyle: GoogleFonts.inter(
-          color: ColorPalette.textSecondary,
-        ),
-        hintStyle: GoogleFonts.inter(
-          color: ColorPalette.textPlaceholder,
-        ),
-      ),
-      style: GoogleFonts.inter(
-        color: ColorPalette.textPrimary,
+        hintStyle: GoogleFonts.sora(color: ColorPalette.textPlaceholder),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -353,69 +388,3 @@ class _PasswordTextField extends StatelessWidget {
     );
   }
 }
-
-/// Premium auth button
-class _AuthButton extends StatelessWidget {
-  final String text;
-  final VoidCallback onPressed;
-  final bool isLoading;
-
-  const _AuthButton({
-    required this.text,
-    required this.onPressed,
-    this.isLoading = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            ColorPalette.gold,
-            ColorPalette.gold.withValues(alpha: 0.9),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: isLoading ? null : onPressed,
-          borderRadius: BorderRadius.circular(20),
-          child: Center(
-            child: isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(
-                    text,
-                    style: GoogleFonts.inter(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-

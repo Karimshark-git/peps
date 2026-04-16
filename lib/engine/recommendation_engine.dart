@@ -1,4 +1,8 @@
+import 'package:flutter/foundation.dart';
+
+import '../features/onboarding/models/onboarding_model.dart';
 import '../services/supabase_client.dart';
+import 'ai_protocol_engine.dart';
 import 'models/peptide_recommendation.dart';
 
 /// Configuration constant for protocol size
@@ -6,15 +10,72 @@ const int kProtocolSize = 5;
 
 /// Recommendation engine that generates personalized peptide protocols
 class RecommendationEngine {
-  /// Generates a protocol based on onboarding response
-  static Future<List<PeptideRecommendation>> generateProtocol(
-    OnboardingResponse response,
-  ) async {
-    // 1. Load all peptides from Supabase
+  static Future<List<Map<String, dynamic>>> _loadPeptides() async {
     final peptidesResponse = await supabase.from('peptides').select('*');
-    final peptides = List<Map<String, dynamic>>.from(peptidesResponse);
+    return List<Map<String, dynamic>>.from(peptidesResponse);
+  }
 
-    // 2. Apply safety filtering and scoring
+  static OnboardingResponse _onboardingModelToResponse(OnboardingModel model) {
+    final lifestyleFactors = <String>[];
+    if (model.lifestyle.isNotEmpty) {
+      final factors = model.lifestyle['factors'] as List<dynamic>?;
+      if (factors != null) {
+        lifestyleFactors.addAll(factors.cast<String>());
+      }
+    }
+
+    final medicalConditions = <String>[];
+    if (model.medical.isNotEmpty) {
+      final conditions = model.medical['conditions'] as List<dynamic>?;
+      if (conditions != null) {
+        medicalConditions.addAll(conditions.cast<String>());
+      }
+    }
+
+    return OnboardingResponse(
+      goals: model.goals,
+      age: model.age,
+      height: model.height,
+      weight: model.weight,
+      activityLevel: model.activityLevel,
+      lifestyleFactors: lifestyleFactors,
+      medicalConditions: medicalConditions,
+    );
+  }
+
+  /// Generates a protocol based on onboarding data (AI first, rule-based fallback).
+  static Future<List<PeptideRecommendation>> generateProtocol(
+    OnboardingModel model,
+  ) async {
+    final peptides = await _loadPeptides();
+
+    try {
+      final aiResults = await AiProtocolEngine.generateProtocol(
+        onboarding: model,
+        peptideCatalog: peptides,
+        maxRecommendations: _maxRecommendations(model),
+      );
+      if (aiResults.isNotEmpty) return aiResults;
+    } catch (e) {
+      debugPrint('[RecommendationEngine] AI engine failed: $e');
+      debugPrint(
+        '[RecommendationEngine] Falling back to rule-based scoring',
+      );
+    }
+
+    return _ruleBasedScore(peptides, _onboardingModelToResponse(model));
+  }
+
+  static int _maxRecommendations(OnboardingModel model) {
+    if (model.goals.length >= 3) return 3;
+    if (model.goals.length == 2) return 2;
+    return 1;
+  }
+
+  static List<PeptideRecommendation> _ruleBasedScore(
+    List<Map<String, dynamic>> peptides,
+    OnboardingResponse response,
+  ) {
     final scoredPeptides = <_ScoredPeptide>[];
 
     for (final peptide in peptides) {
@@ -22,7 +83,6 @@ class RecommendationEngine {
         peptide['medical_flags'] as List<dynamic>? ?? [],
       );
 
-      // Safety filter: skip if user has medical condition in medical_flags
       bool shouldSkip = false;
       for (final condition in response.medicalConditions) {
         if (medicalFlags.contains(condition)) {
@@ -32,10 +92,8 @@ class RecommendationEngine {
       }
       if (shouldSkip) continue;
 
-      // 3. Calculate score
       double score = 0.0;
 
-      // +3 points for each matching goal
       final goalsSupported = List<String>.from(
         peptide['goals_supported'] as List<dynamic>? ?? [],
       );
@@ -45,7 +103,6 @@ class RecommendationEngine {
         }
       }
 
-      // +2 points for each matching lifestyle factor
       final lifestyleSupported = List<String>.from(
         peptide['lifestyle_supported'] as List<dynamic>? ?? [],
       );
@@ -55,7 +112,6 @@ class RecommendationEngine {
         }
       }
 
-      // +1 bonus if activity level is "Very Active" AND peptide category is muscle/recovery
       final category = peptide['category'] as String? ?? '';
       if (response.activityLevel == 'Very Active' &&
           (category.toLowerCase().contains('muscle') ||
@@ -64,7 +120,6 @@ class RecommendationEngine {
         score += 1;
       }
 
-      // +1 bonus if age > 35 AND peptide category is anti-aging/longevity
       if (response.age != null &&
           response.age! > 35 &&
           (category.toLowerCase().contains('anti-aging') ||
@@ -72,7 +127,6 @@ class RecommendationEngine {
         score += 1;
       }
 
-      // -3 penalty if contraindications include any user medical condition
       final contraindications = List<String>.from(
         peptide['contraindications'] as List<dynamic>? ?? [],
       );
@@ -83,8 +137,6 @@ class RecommendationEngine {
         }
       }
 
-      // -5 penalty if medical_flags contains high-risk conditions
-      // (Heart Conditions, Cancer history, Diabetes are considered high-risk)
       final highRiskConditions = [
         'Heart Conditions',
         'Cancer history',
@@ -103,25 +155,23 @@ class RecommendationEngine {
       ));
     }
 
-    // 4. Filter for top picks (score >= 3) and sort by score
     scoredPeptides.sort((a, b) => b.score.compareTo(a.score));
     final topPeptides = scoredPeptides
         .where((sp) => sp.score >= 3)
         .take(kProtocolSize)
         .toList();
 
-    // 5. Build recommendations with reasoning
     final recommendations = <PeptideRecommendation>[];
 
+    var rank = 0;
     for (final scoredPeptide in topPeptides) {
+      rank++;
       final peptide = scoredPeptide.peptide;
       final reasoningTemplate =
           peptide['reasoning_template'] as String? ?? '';
 
-      // Build reasoning text by replacing placeholders
       String reasoning = reasoningTemplate;
-      
-      // Replace {goal} with first matching goal
+
       if (reasoning.contains('{goal}')) {
         final matchingGoal = response.goals.firstWhere(
           (goal) {
@@ -135,7 +185,6 @@ class RecommendationEngine {
         reasoning = reasoning.replaceAll('{goal}', matchingGoal);
       }
 
-      // Replace {lifestyle} with first matching lifestyle factor
       if (reasoning.contains('{lifestyle}')) {
         final matchingLifestyle = response.lifestyleFactors.firstWhere(
           (lifestyle) {
@@ -151,7 +200,6 @@ class RecommendationEngine {
         reasoning = reasoning.replaceAll('{lifestyle}', matchingLifestyle);
       }
 
-      // Replace {age} with user's age
       if (reasoning.contains('{age}')) {
         reasoning = reasoning.replaceAll(
           '{age}',
@@ -159,7 +207,6 @@ class RecommendationEngine {
         );
       }
 
-      // If no template, use a default reasoning
       if (reasoning.isEmpty) {
         reasoning =
             'Selected based on your goals and profile to support your personalized health journey.';
@@ -169,6 +216,10 @@ class RecommendationEngine {
         peptide['short_benefits'] as List<dynamic>? ?? [],
       );
 
+      final dosage = peptide['dosage'] as String? ?? '';
+      final frequency = peptide['frequency'] as String? ?? '';
+      final cycleLength = peptide['cycle_length'] as String? ?? '';
+
       recommendations.add(PeptideRecommendation(
         peptideId: peptide['id'] as String,
         name: peptide['name'] as String,
@@ -177,6 +228,15 @@ class RecommendationEngine {
         score: scoredPeptide.score,
         category: peptide['category'] as String? ?? '',
         shortBenefits: shortBenefits,
+        patientSummary: '',
+        confidence: '',
+        rank: rank,
+        primaryGoalMatch: '',
+        contraindictionFlags: const [],
+        dosage: dosage,
+        frequency: frequency,
+        cycleLength: cycleLength,
+        stackNote: '',
       ));
     }
 
@@ -184,7 +244,6 @@ class RecommendationEngine {
   }
 }
 
-/// Internal helper class for scoring peptides
 class _ScoredPeptide {
   final Map<String, dynamic> peptide;
   final double score;
@@ -194,4 +253,3 @@ class _ScoredPeptide {
     required this.score,
   });
 }
-

@@ -45,5 +45,13 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Environment files with sensitive credentials
+# Local secrets — never commit these
 lib/env/supabase_env.dart
+.env
+.env.*
+!.env.example
+*.secret
+dart_defines.json
+
+# Claude Code worktrees & session data
+.claude/

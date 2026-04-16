@@ -37,26 +37,21 @@ class AuthService {
       final firstName = onboardingProvider.model.firstName;
       
       final userData = <String, dynamic>{
-        'auth_uid': uid,
+        'id': uid,
         'email': email,
       };
-      
+
       // Add first_name if available
       if (firstName != null && firstName.isNotEmpty) {
         userData['first_name'] = firstName;
       }
-      
-      // Upsert user - this will create the entry if it doesn't exist
-      final userResponse = await supabase
-          .from('users')
-          .upsert(
-            userData,
-            onConflict: 'auth_uid',
-          )
-          .select()
-          .single();
 
-      final userId = userResponse['id'] as String;
+      // Upsert user — id IS the auth UID, conflict on PK
+      await supabase
+          .from('users')
+          .upsert(userData, onConflict: 'id');
+
+      final userId = uid;
 
       // 3. Save onboarding data if available
       await OnboardingService.saveOnboardingResponseForUserWithModel(
@@ -65,6 +60,7 @@ class AuthService {
       );
 
       // 4. Save protocol recommendations to Supabase (only if not already saved)
+      if (!context.mounted) return;
       final protocolProvider = Provider.of<ProtocolProvider>(
         context,
         listen: false,
@@ -99,11 +95,13 @@ class AuthService {
 
       // 5. Check if user has completed onboarding
       // If they have onboarding data, go to home. Otherwise, start assessment.
-      final onboardingResponse = await supabase
+      final onboardingRows = await supabase
           .from('onboarding_responses')
           .select('id')
           .eq('user_id', userId)
-          .maybeSingle();
+          .limit(1);
+      final onboardingResponse =
+          (onboardingRows as List).isNotEmpty ? onboardingRows.first : null;
 
       if (!context.mounted) return;
 

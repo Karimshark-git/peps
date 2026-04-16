@@ -1,14 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 /// Premium page transitions for onboarding screens with iOS swipe-back support
 class AppPageTransitions {
-  /// Creates a premium onboarding route with:
-  /// - Fade in animation
-  /// - Subtle upward motion (10-14px)
-  /// - Scale from 0.98 → 1.0
-  /// - Smooth easeOutCubic curve
-  /// - iOS swipe-back gesture support
+  /// Fade through with micro lift (forward) and fade + float up (reverse pop).
   static PageRoute<T> onboardingRoute<T extends Object?>(
     Widget child, {
     RouteSettings? settings,
@@ -16,55 +10,62 @@ class AppPageTransitions {
     return PageRouteBuilder<T>(
       settings: settings,
       pageBuilder: (context, animation, secondaryAnimation) => child,
-      transitionDuration: const Duration(milliseconds: 450),
-      reverseTransitionDuration: const Duration(milliseconds: 450),
+      transitionDuration: const Duration(milliseconds: 500),
+      reverseTransitionDuration: const Duration(milliseconds: 400),
       maintainState: true,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        // Forward animation (entering screen)
-        final forwardCurve = Curves.easeOutCubic;
-        final forwardAnimation = CurvedAnimation(
-          parent: animation,
-          curve: forwardCurve,
-        );
+        return AnimatedBuilder(
+          animation: animation,
+          builder: (context, child) {
+            final t = animation.value.clamp(0.0, 1.0);
+            final reverse = animation.status == AnimationStatus.reverse;
 
-        // Fade animation for new page
-        final fadeAnimation = Tween<double>(
-          begin: 0.0,
-          end: 1.0,
-        ).animate(forwardAnimation);
+            late final double opacity;
+            late final Offset translation;
 
-        // Slide up animation (10-14px upward motion)
-        final slideAnimation = Tween<Offset>(
-          begin: const Offset(0, 0.012), // ~14px on typical screen
-          end: Offset.zero,
-        ).animate(forwardAnimation);
+            if (reverse) {
+              // ── LEAVING (pop): fade out + float up slightly ──
+              final p = 1.0 - t;
+              final fadeT =
+                  const Interval(0.0, 0.5, curve: Curves.easeIn).transform(p);
+              opacity = 1.0 - fadeT;
+              final slideT =
+                  const Interval(0.0, 0.6, curve: Curves.easeIn).transform(p);
+              translation = Offset.lerp(
+                Offset.zero,
+                const Offset(0, -0.015),
+                slideT,
+              )!;
+            } else {
+              // ── ENTERING (push): fade in + micro lift from below ──
+              final fadeT = const Interval(0.0, 0.75, curve: Curves.easeOut)
+                  .transform(t);
+              opacity = fadeT;
+              final slideT =
+                  const Interval(0.0, 0.85, curve: Curves.easeOutCubic)
+                      .transform(t);
+              translation = Offset.lerp(
+                const Offset(0, 0.025),
+                Offset.zero,
+                slideT,
+              )!;
+            }
 
-        // Scale animation (0.98 → 1.0)
-        final scaleAnimation = Tween<double>(
-          begin: 0.98,
-          end: 1.0,
-        ).animate(forwardAnimation);
-
-        // Combine all animations for the new page
-        return FadeTransition(
-          opacity: fadeAnimation,
-          child: SlideTransition(
-            position: slideAnimation,
-            child: ScaleTransition(
-              scale: scaleAnimation,
-              child: child,
-            ),
-          ),
+            return Opacity(
+              opacity: opacity.clamp(0.0, 1.0),
+              child: FractionalTranslation(
+                translation: translation,
+                child: child,
+              ),
+            );
+          },
+          child: child,
         );
       },
     );
   }
 
-  /// Creates a premium card push route with:
-  /// - Right-to-left slide animation (iOS-like)
-  /// - Fade in animation
-  /// - Smooth easeInOutCubic curve
-  /// - 150-220ms duration
+  /// Card push: subtle R→L slide + fade (peptide details, email login).
   static PageRoute<T> cardPushRoute<T extends Object?>(
     Widget child, {
     RouteSettings? settings,
@@ -72,30 +73,27 @@ class AppPageTransitions {
     return PageRouteBuilder<T>(
       settings: settings,
       pageBuilder: (context, animation, secondaryAnimation) => child,
-      transitionDuration: const Duration(milliseconds: 200),
-      reverseTransitionDuration: const Duration(milliseconds: 200),
+      transitionDuration: const Duration(milliseconds: 280),
+      reverseTransitionDuration: const Duration(milliseconds: 280),
       maintainState: true,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        // Forward animation (entering screen)
-        final forwardCurve = Curves.easeInOutCubic;
-        final forwardAnimation = CurvedAnimation(
-          parent: animation,
-          curve: forwardCurve,
+        final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+          CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOut,
+          ),
         );
 
-        // Fade animation for new page
-        final fadeAnimation = Tween<double>(
-          begin: 0.0,
-          end: 1.0,
-        ).animate(forwardAnimation);
-
-        // Slide from right animation
         final slideAnimation = Tween<Offset>(
-          begin: const Offset(0.05, 0), // Slide from right
+          begin: const Offset(0.04, 0),
           end: Offset.zero,
-        ).animate(forwardAnimation);
+        ).animate(
+          CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          ),
+        );
 
-        // Combine fade and slide for new page
         return FadeTransition(
           opacity: fadeAnimation,
           child: SlideTransition(
@@ -107,4 +105,3 @@ class AppPageTransitions {
     );
   }
 }
-

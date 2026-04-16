@@ -325,12 +325,12 @@ class _InfoCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.white,
-                    const Color(0xFFF8F3EC),
+                    Color(0xFFF8F3EC),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(22),
@@ -387,7 +387,7 @@ class _InfoCard extends StatelessWidget {
                           ],
                         ),
                       );
-                    }).toList()
+                    })
                   else
                     Text(
                       content,
@@ -435,12 +435,12 @@ class _DosageFrequencyCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.white,
-                    const Color(0xFFF8F3EC),
+                    Color(0xFFF8F3EC),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(22),
@@ -470,7 +470,7 @@ class _DosageFrequencyCard extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.medication_liquid_rounded,
                         size: 20,
                         color: goldColor,
@@ -507,7 +507,7 @@ class _DosageFrequencyCard extends StatelessWidget {
                   // Divider
                   Container(
                     height: 1,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
                           Colors.transparent,
@@ -522,7 +522,7 @@ class _DosageFrequencyCard extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.schedule_rounded,
                         size: 20,
                         color: goldColor,
@@ -601,7 +601,7 @@ class _SafetyDisclaimerCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.info_outline_rounded,
                     size: 18,
                     color: ColorPalette.textSecondary,

@@ -41,20 +41,15 @@ class MainNavigationState extends State<MainNavigation> {
         children: _screens,
       ),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: ColorPalette.cardBackground,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
+        decoration: const BoxDecoration(
+          color: ColorPalette.bottomNavBackground,
+          border: Border(
+            top: BorderSide(color: ColorPalette.cardBorder, width: 1),
+          ),
         ),
         child: SafeArea(
-          child: Container(
+          child: SizedBox(
             height: 70,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -123,9 +118,9 @@ class _NavItem extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 label,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.sora(
                   fontSize: 12,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
                   color: isActive
                       ? ColorPalette.gold
                       : ColorPalette.textSecondary,
@@ -138,4 +133,3 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
-

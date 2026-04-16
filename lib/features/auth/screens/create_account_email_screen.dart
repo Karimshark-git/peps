@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/color_palette.dart';
+import '../../../core/widgets/peps_ambient_orbs.dart';
+import '../../../core/widgets/primary_button.dart';
 import '../../../services/supabase_client.dart';
 import '../../../app_router.dart';
 import '../../../providers/auth_credentials_provider.dart';
@@ -99,6 +101,7 @@ class _CreateAccountEmailScreenState extends State<CreateAccountEmailScreen>
       );
 
       // Store credentials for verification screen
+      if (!mounted) return;
       final credentialsProvider =
           Provider.of<AuthCredentialsProvider>(context, listen: false);
       credentialsProvider.setCredentials(email, password);
@@ -141,38 +144,41 @@ class _CreateAccountEmailScreenState extends State<CreateAccountEmailScreen>
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _pageFadeAnimation,
-          child: SlideTransition(
-            position: _pageSlideAnimation,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 32),
+      body: Stack(
+        children: [
+          const PepsAmbientOrbs(),
+          SafeArea(
+            child: FadeTransition(
+              opacity: _pageFadeAnimation,
+              child: SlideTransition(
+                position: _pageSlideAnimation,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 32),
                     // Title
                     Text(
                       'Create Account',
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w700,
+                      style: GoogleFonts.sora(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w500,
                         color: ColorPalette.textPrimary,
                         height: 1.2,
+                        letterSpacing: -0.3,
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // Subtitle
                     Text(
                       'Sign up to access your personalized protocol.',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
+                      style: GoogleFonts.sora(
+                        fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: ColorPalette.textSecondary,
-                        height: 1.5,
+                        height: 1.55,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -206,19 +212,21 @@ class _CreateAccountEmailScreenState extends State<CreateAccountEmailScreen>
                     ),
                     const SizedBox(height: 32),
 
-                    // Create Account button
-                    _AuthButton(
-                      text: 'Create Account',
-                      onPressed: _handleCreateAccount,
+                    PrimaryButton(
+                      text: 'Create account',
                       isLoading: _isLoading,
+                      isEnabled: !_isLoading,
+                      onPressed: _handleCreateAccount,
                     ),
                     const SizedBox(height: 32),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -235,7 +243,12 @@ class _EmailTextField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       keyboardType: TextInputType.emailAddress,
+      cursorColor: ColorPalette.gold,
       autofillHints: const [AutofillHints.email],
+      style: GoogleFonts.sora(
+        fontSize: 16,
+        color: ColorPalette.textPrimary,
+      ),
       decoration: InputDecoration(
         labelText: 'Email',
         hintText: 'your@email.com',
@@ -243,26 +256,19 @@ class _EmailTextField extends StatelessWidget {
         filled: true,
         fillColor: ColorPalette.cardBackground,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: ColorPalette.cardBorder),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: ColorPalette.cardBorder),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: ColorPalette.gold, width: 2),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: ColorPalette.gold, width: 1),
         ),
-        labelStyle: GoogleFonts.inter(
-          color: ColorPalette.textSecondary,
-        ),
-        hintStyle: GoogleFonts.inter(
-          color: ColorPalette.textPlaceholder,
-        ),
-      ),
-      style: GoogleFonts.inter(
-        color: ColorPalette.textPrimary,
+        labelStyle: GoogleFonts.sora(color: ColorPalette.textSecondary),
+        hintStyle: GoogleFonts.sora(color: ColorPalette.textPlaceholder),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -296,7 +302,12 @@ class _PasswordTextField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
+      cursorColor: ColorPalette.gold,
       autofillHints: const [AutofillHints.password],
+      style: GoogleFonts.sora(
+        fontSize: 16,
+        color: ColorPalette.textPrimary,
+      ),
       decoration: InputDecoration(
         labelText: label,
         hintText: 'Enter your password',
@@ -311,26 +322,19 @@ class _PasswordTextField extends StatelessWidget {
         filled: true,
         fillColor: ColorPalette.cardBackground,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: ColorPalette.cardBorder),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: ColorPalette.cardBorder),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: ColorPalette.gold, width: 2),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: ColorPalette.gold, width: 1),
         ),
-        labelStyle: GoogleFonts.inter(
-          color: ColorPalette.textSecondary,
-        ),
-        hintStyle: GoogleFonts.inter(
-          color: ColorPalette.textPlaceholder,
-        ),
-      ),
-      style: GoogleFonts.inter(
-        color: ColorPalette.textPrimary,
+        labelStyle: GoogleFonts.sora(color: ColorPalette.textSecondary),
+        hintStyle: GoogleFonts.sora(color: ColorPalette.textPlaceholder),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -344,69 +348,3 @@ class _PasswordTextField extends StatelessWidget {
     );
   }
 }
-
-/// Auth button
-class _AuthButton extends StatelessWidget {
-  final String text;
-  final VoidCallback onPressed;
-  final bool isLoading;
-
-  const _AuthButton({
-    required this.text,
-    required this.onPressed,
-    this.isLoading = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            ColorPalette.gold,
-            ColorPalette.gold.withValues(alpha: 0.9),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: isLoading ? null : onPressed,
-          borderRadius: BorderRadius.circular(20),
-          child: Center(
-            child: isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(
-                    text,
-                    style: GoogleFonts.inter(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
